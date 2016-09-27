@@ -67,9 +67,6 @@ typedef enum {
 } justwifi_ap_modes_t;
 
 typedef enum {
-    MESSAGE_AUTO_NOSSID,
-    MESSAGE_AUTO_CONNECTING,
-    MESSAGE_AUTO_FAILED,
     MESSAGE_SCANNING,
     MESSAGE_SCAN_FAILED,
     MESSAGE_NO_NETWORKS,

@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
-    WiFi.scanNetworks(true);
 }
 
 JustWifi::~JustWifi() {
@@ -50,7 +49,6 @@ uint8_t JustWifi::_connect(uint8_t id) {
 
     static uint8_t networkID;
     static uint8_t state = 0;
-    static uint8_t previous = 0xFF;
     static unsigned long timeout;
 
     // Reset connection process
@@ -61,11 +59,6 @@ uint8_t JustWifi::_connect(uint8_t id) {
 
     // Get network
     network_t entry = _network_list[networkID];
-
-    if (previous != state) {
-        DEBUG_WIFI_MULTI("_connect::state=%d (%s)\n", state, entry.ssid);
-        previous = state;
-    }
 
     // No state or previous network failed
     if (state == 0) {
@@ -274,15 +267,9 @@ uint8_t JustWifi::_startSTA(bool reset) {
 
     static uint8_t currentID;
     static uint8_t state = 0;
-    static uint8_t previous = 0xFF;
 
     // Reset process
     if (reset) state = 0;
-
-    if (previous != state) {
-        DEBUG_WIFI_MULTI("_startSTA::state=%d\n", state);
-        previous = state;
-    }
 
     // Starting over
     if (state == 0) {

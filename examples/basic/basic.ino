@@ -50,18 +50,6 @@ void setup() {
     // Message callbacks
     jw.onMessage([](justwifi_messages_t code, char * parameter) {
 
-        if (code == MESSAGE_AUTO_NOSSID) {
-            Serial.printf("[WIFI] No information about the last successful network\n");
-        }
-
-        if (code == MESSAGE_AUTO_CONNECTING) {
-            Serial.printf("[WIFI] Connecting to last successful network: %s\n", parameter);
-        }
-
-        if (code == MESSAGE_AUTO_FAILED) {
-            Serial.printf("[WIFI] Could not connect to last successful network\n");
-        }
-
         if (code == MESSAGE_SCANNING) {
             Serial.printf("[WIFI] Scanning\n");
         }
