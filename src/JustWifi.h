@@ -67,6 +67,13 @@ typedef enum {
 } justwifi_ap_modes_t;
 
 typedef enum {
+    STATE_NOT_CONNECTED,
+    STATE_SCANNING,
+    STATE_CONNECTING,
+    STATE_CONNECTED
+} justwifi_states_t;
+
+typedef enum {
     MESSAGE_SCANNING,
     MESSAGE_SCAN_FAILED,
     MESSAGE_NO_NETWORKS,
@@ -135,15 +142,17 @@ class JustWifi {
         bool _scan = false;
         uint8_t _bestID;
 
-        uint8_t _startSTA(bool reset);
+        justwifi_states_t _connect(uint8_t id = 0xFF);
+        justwifi_states_t _startSTA(bool reset);
         bool _startAP();
         uint8_t _populate(uint8_t networkCount);
         void _sortByRSSI();
-        uint8_t _connect(uint8_t id = 0xFF);
         void _scanNetworks();
         int8_t _scanComplete();
         void _doCallback(justwifi_messages_t message, char * parameter = NULL);
 
 };
+
+extern JustWifi jw;
 
 #endif
