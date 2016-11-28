@@ -1,0 +1,25 @@
+{
+    "name": "JustWifi",
+    "keywords": "wifi,manager,scan",
+    "description": "Wifi Manager for ESP8266 that supports multiple wifi networks and scan for strongest signal",
+    "repository": {
+        "type": "git",
+        "url": "https://bitbucket.org/xoseperez/justwifi.git"
+    },
+    "version": "1.1.0",
+    "license": "GPL-3.0",
+    "exclude": "tests",
+    "frameworks": "arduino",
+    "platforms": "espressif8266",
+    "dependencies": [
+    ],
+    "authors": {
+        "name": "Xose Perez",
+        "email": "xose.perez@gmail.com",
+        "url": "http://tinkerman.cat",
+        "maintainer": true
+    },
+    "examples": [
+        "examples/*/*.ino"
+    ]
+}
