@@ -1,4 +1,4 @@
-.pioenvs
-.piolibdeps
+.pio*
+pio
 *.gch
 test

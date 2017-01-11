@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.2] 2017-01-11
+### Fixed
+- Do not disable STA mode after disconnect
+
 ## [1.1.1] 2016-12-29
 ### Fixed
 - Remove declaration from example, jw is a singleton

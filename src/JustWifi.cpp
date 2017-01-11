@@ -59,6 +59,8 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
     // No state or previous network failed
     if (state == STATE_NOT_CONNECTED) {
 
+        WiFi.mode(WIFI_STA);
+
         // Configure static options
         if (!entry.dhcp) {
             WiFi.config(entry.ip, entry.gw, entry.netmask, entry.dns);
@@ -273,6 +275,8 @@ justwifi_states_t JustWifi::_startSTA(bool reset) {
 
     // Starting over
     if (state == STATE_NOT_CONNECTED) {
+
+        WiFi.enableSTA(true);
 
         if (_scan) {
             _scanNetworks();
@@ -529,7 +533,7 @@ bool JustWifi::connected() {
 
 bool JustWifi::disconnect() {
     _timeout = 0;
-    WiFi.disconnect(true);
+    WiFi.disconnect();
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
