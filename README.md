@@ -33,7 +33,7 @@ The main features of the JustWifi library are:
 * Fallback to AP mode
 * Configurable timeout to try to reconnect after AP fallback
 * AP+STA mode
-* Static IP
+* Static IP (autoconnect is disabled when using static IP)
 * Single debug/action callback
 
 ## Usage

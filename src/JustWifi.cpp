@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.0
+JustWifi 1.1.3
 
 Wifi Manager for ESP8266
 
@@ -80,10 +80,14 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
 
     // Connected?
     if (WiFi.status() == WL_CONNECTED) {
-        WiFi.setAutoConnect(true);
+
+        // Autoconnect only if DHCP, since it doesn't store static IP data
+        WiFi.setAutoConnect(entry.dhcp);
+
         WiFi.setAutoReconnect(true);
         _doCallback(MESSAGE_CONNECTED);
         return (state = STATE_CONNECTED);
+
     }
 
     // Check timeout
