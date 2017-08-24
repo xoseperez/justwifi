@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.4] 2017-08-24
+### Fixed
+- Fixed code according to Arduino-ESP8266 issue https://github.com/esp8266/Arduino/issues/2186
+
 ## [1.1.3] 2017-01-17
 ### Changed
 - Disable autoconnect when using static IP

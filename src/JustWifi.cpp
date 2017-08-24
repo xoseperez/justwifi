@@ -59,6 +59,13 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
     // No state or previous network failed
     if (state == STATE_NOT_CONNECTED) {
 
+        WiFi.persistent(false);
+
+        // See https://github.com/esp8266/Arduino/issues/2186
+        if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
+            WiFi.mode(WIFI_OFF);
+        }
+
         WiFi.mode(WIFI_STA);
 
         // Configure static options
@@ -73,6 +80,7 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
         } else {
             WiFi.begin(entry.ssid, entry.pass, entry.channel, entry.bssid);
         }
+
         timeout = millis();
         return (state = STATE_CONNECTING);
 
