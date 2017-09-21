@@ -75,7 +75,17 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
         }
 
         // Connect
-        _doCallback(MESSAGE_CONNECTING, entry.ssid);
+		{
+            char buffer[100];
+            snprintf_P(buffer, sizeof(buffer),
+                PSTR("BSSID %02X:%02X:%02X:%02X:%02X:%02X - CH %02d - SSID %s"),
+                entry.bssid[0], entry.bssid[1], entry.bssid[2],
+                entry.bssid[3], entry.bssid[4], entry.bssid[5],
+                entry.channel, entry.ssid
+            );
+		    _doCallback(MESSAGE_CONNECTING, buffer);
+        }
+
         if (entry.channel == 0) {
             WiFi.begin(entry.ssid, entry.pass);
         } else {
@@ -159,6 +169,14 @@ void JustWifi::_sortByRSSI() {
 
 }
 
+String JustWifi::_encodingString(uint8_t security) {
+    if (security == ENC_TYPE_WEP) return String("WEP ");
+    if (security == ENC_TYPE_TKIP) return String("WPA ");
+    if (security == ENC_TYPE_CCMP) return String("WPA2");
+    if (security == ENC_TYPE_AUTO) return String("AUTO");
+    return String("OPEN");
+}
+
 uint8_t JustWifi::_populate(uint8_t networkCount) {
 
     uint8_t count = 0;
@@ -192,25 +210,36 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
                 if ((sec_scan != ENC_TYPE_NONE) && (entry->pass == NULL)) continue;
 
                 known = true;
-                count++;
-                entry->rssi = rssi_scan;
-                entry->security = sec_scan;
-                entry->channel = chan_scan;
-                memcpy((void*) &entry->bssid, (void*) BSSID_scan, sizeof(entry->bssid));
-                break;
+
+                // If there are more than one AP with the same name,
+                // choose the one with best RSSI
+                // Thanks to Robert (robi772 @ bitbucket.org)
+				if (entry->rssi< rssi_scan || entry->rssi == 0) {
+    	            count++;
+    	            entry->rssi = rssi_scan;
+    	            entry->security = sec_scan;
+    	            entry->channel = chan_scan;
+    	            memcpy((void*) &entry->bssid, (void*) BSSID_scan, sizeof(entry->bssid));
+    	            break;
+				}
+
             }
         }
 
-        char buffer[200];
-        sprintf(buffer,
-            "%s %s SEC:%s RSSI:%d CH:%d",
-            (known ? "-->" : "   "),
-            (char *) ssid_scan.c_str(),
-            (sec_scan != ENC_TYPE_NONE ? "YES" : "NO "),
-            rssi_scan,
-            chan_scan
-        );
-        _doCallback(MESSAGE_FOUND_NETWORK, buffer);
+        {
+            char buffer[100];
+            snprintf_P(buffer, sizeof(buffer),
+                PSTR("%s  BSSID %02X:%02X:%02X:%02X:%02X:%02X - RSSI %d - CH %02d - ENC %s - SSID %s"),
+                (known ? "-->" : "   "),
+                BSSID_scan[0], BSSID_scan[1], BSSID_scan[2],
+                BSSID_scan[3], BSSID_scan[4], BSSID_scan[5],
+                rssi_scan,
+                chan_scan,
+                _encodingString(sec_scan).c_str(),
+                (char *) ssid_scan.c_str()
+            );
+            _doCallback(MESSAGE_FOUND_NETWORK, buffer);
+        }
 
     }
 

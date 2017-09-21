@@ -150,6 +150,7 @@ class JustWifi {
         void _sortByRSSI();
         void _scanNetworks();
         int8_t _scanComplete();
+        String _encodingString(uint8_t security);
         void _doCallback(justwifi_messages_t message, char * parameter = NULL);
 
 };
