@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
+    snprintf_P(_hostname, sizeof(_hostname), PSTR("ESP_%06X"), ESP.getChipId());
 }
 
 JustWifi::~JustWifi() {
@@ -353,7 +354,7 @@ bool JustWifi::_startAP() {
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
-        _softap.ssid = strdup(WiFi.hostname().c_str());
+        _softap.ssid = strdup(_hostname);
     }
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATING);
@@ -520,6 +521,7 @@ void JustWifi::resetReconnectTimeout() {
 }
 
 void JustWifi::setHostname(const char * hostname) {
+    strncpy(_hostname, hostname, sizeof(_hostname));
     WiFi.hostname(hostname);
 }
 

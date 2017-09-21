@@ -13,7 +13,7 @@ void setup() {
     delay(10);
 
     // Set WIFI hostname (otherwise it would be ESP_XXXXXX)
-    //jw.setHostname("justwifi");
+    //jw.setHostname("JUSTWIFI");
 
     // Configure it to scan available networks and connect in order of dBm
     jw.scanNetworks(true);
