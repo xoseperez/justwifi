@@ -3,6 +3,14 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.5] 2017-09-22
+### Fixed
+- Fix bug when no hostname defined (#1)
+- When multiple routers have the same SSID, choose the one with strongest signal (#2). Thanks to Robert (robi772 @ bitbucket.org)!
+
+### Changed
+- Callbacks output more info about networks
+
 ## [1.1.4] 2017-08-24
 ### Fixed
 - Fixed code according to Arduino-ESP8266 issue https://github.com/esp8266/Arduino/issues/2186
