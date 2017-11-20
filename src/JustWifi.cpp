@@ -580,6 +580,25 @@ bool JustWifi::disconnect() {
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
+bool JustWifi::turnOff() {
+	WiFi.disconnect();
+	WiFi.mode(WIFI_OFF);
+	WiFi.forceSleepBegin();
+	state=STATE_OFF
+	delay(1);
+    _doCallback(TURNING_OFF);
+}
+
+bool JustWifi::turnOn() {
+		WiFi.forceSleepWake();
+		delay( 1 );
+		// Bring up the WiFi connection
+		WiFi.mode( WIFI_STA );
+		state=STATE_NOT_CONNECTED
+		wifiReconnectCheck();
+		_doCallback(TURNING_ON);
+}
+
 void JustWifi::setAPMode(justwifi_ap_modes_t mode) {
     _ap_mode = mode;
 }
@@ -598,6 +617,7 @@ void JustWifi::loop() {
     static bool reset = true;
     static justwifi_states_t state = STATE_NOT_CONNECTED;
 
+	if state
     if (connecting) {
 
         // _startSTA may return:

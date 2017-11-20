@@ -67,6 +67,8 @@ typedef enum {
 } justwifi_ap_modes_t;
 
 typedef enum {
+
+	STATE_OFF,
     STATE_NOT_CONNECTED,
     STATE_SCANNING,
     STATE_CONNECTING,
@@ -87,7 +89,9 @@ typedef enum {
     MESSAGE_ACCESSPOINT_FAILED,
     MESSAGE_ACCESSPOINT_CREATED,
     MESSAGE_DISCONNECTED,
-    MESSAGE_HOSTNAME_ERROR
+    MESSAGE_HOSTNAME_ERROR,
+	MESSAGE_TURNING_OFF,
+	MESSAGE_TURNING_ON
 } justwifi_messages_t;
 
 class JustWifi {
@@ -118,6 +122,8 @@ class JustWifi {
 
         bool disconnect();
         bool connected();
+		bool turnOff();
+		bool turnOn();
         bool createAP();
         wl_status_t getStatus();
         String getAPSSID();
