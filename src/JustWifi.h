@@ -67,12 +67,11 @@ typedef enum {
 } justwifi_ap_modes_t;
 
 typedef enum {
-
-	STATE_OFF,
     STATE_NOT_CONNECTED,
     STATE_SCANNING,
     STATE_CONNECTING,
-    STATE_CONNECTED
+    STATE_CONNECTED,
+	STATE_OFF
 } justwifi_states_t;
 
 typedef enum {
