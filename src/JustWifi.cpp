@@ -1,10 +1,10 @@
 /*
 
-JustWifi 1.1.3
+JustWifi 1.1.6
 
 Wifi Manager for ESP8266
 
-Copyright (C) 2016 by Xose Pérez <xose dot perez at gmail dot com>
+Copyright (C) 2016-2018 by Xose Pérez <xose dot perez at gmail dot com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -76,12 +76,14 @@ justwifi_states_t JustWifi::_connect(uint8_t id) {
 
         // Connect
 		{
-            char buffer[100];
+            char buffer[128];
             snprintf_P(buffer, sizeof(buffer),
-                PSTR("BSSID %02X:%02X:%02X:%02X:%02X:%02X - CH %02d - SSID %s"),
-                entry.bssid[0], entry.bssid[1], entry.bssid[2],
-                entry.bssid[3], entry.bssid[4], entry.bssid[5],
-                entry.channel, entry.ssid
+                PSTR("BSSID: %02X:%02X:%02X:%02X:%02X:%02X CH: %02d, RSSI: %3d, SEC: %s, SSID: %s"),
+                entry.bssid[0], entry.bssid[1], entry.bssid[2], entry.bssid[3], entry.bssid[4], entry.bssid[5],
+                entry.channel,
+                entry.rssi,
+                _encodingString(entry.security).c_str(),
+                entry.ssid
             );
 		    _doCallback(MESSAGE_CONNECTING, buffer);
         }
@@ -186,15 +188,15 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
         _network_list[j].rssi = 0;
     }
 
+    String ssid_scan;
+    int32_t rssi_scan;
+    uint8_t sec_scan;
+    uint8_t* BSSID_scan;
+    int32_t chan_scan;
+    bool hidden_scan;
+
     // Populate defined networks with scan data
     for (int8_t i = 0; i < networkCount; ++i) {
-
-        String ssid_scan;
-        int32_t rssi_scan;
-        uint8_t sec_scan;
-        uint8_t* BSSID_scan;
-        int32_t chan_scan;
-        bool hidden_scan;
 
         WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, BSSID_scan, chan_scan, hidden_scan);
 
@@ -209,37 +211,37 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
                 // Check security
                 if ((sec_scan != ENC_TYPE_NONE) && (entry->pass == NULL)) continue;
 
-                known = true;
-
-                // If there are more than one AP with the same name,
-                // choose the one with best RSSI
+                // In case of several networks with the same SSID
+                // we want to get the one with the best RSSI
                 // Thanks to Robert (robi772 @ bitbucket.org)
-				if (entry->rssi< rssi_scan || entry->rssi == 0) {
-    	            count++;
-    	            entry->rssi = rssi_scan;
-    	            entry->security = sec_scan;
-    	            entry->channel = chan_scan;
-    	            memcpy((void*) &entry->bssid, (void*) BSSID_scan, sizeof(entry->bssid));
-    	            break;
-				}
+                if (entry->rssi < rssi_scan || entry->rssi == 0) {
+                    entry->rssi = rssi_scan;
+                    entry->security = sec_scan;
+                    entry->channel = chan_scan;
+                    memcpy((void*) &entry->bssid, (void*) BSSID_scan, sizeof(entry->bssid));
+                }
+
+                count++;
+                known = true;
+                break;
 
             }
+
         }
 
-        {
-            char buffer[100];
-            snprintf_P(buffer, sizeof(buffer),
-                PSTR("%s  BSSID %02X:%02X:%02X:%02X:%02X:%02X - RSSI %d - CH %02d - ENC %s - SSID %s"),
-                (known ? "-->" : "   "),
-                BSSID_scan[0], BSSID_scan[1], BSSID_scan[2],
-                BSSID_scan[3], BSSID_scan[4], BSSID_scan[5],
+		{
+		    char buffer[128];
+		    sprintf_P(buffer,
+		        PSTR("%s BSSID: %02X:%02X:%02X:%02X:%02X:%02X CH: %2d RSSI: %3d SEC: %s SSID: %s"),
+		        (known ? "-->" : "   "),
+		        BSSID_scan[0], BSSID_scan[1], BSSID_scan[2], BSSID_scan[3], BSSID_scan[4], BSSID_scan[5],
+		        chan_scan,
                 rssi_scan,
-                chan_scan,
                 _encodingString(sec_scan).c_str(),
-                (char *) ssid_scan.c_str()
-            );
-            _doCallback(MESSAGE_FOUND_NETWORK, buffer);
-        }
+		        ssid_scan.c_str()
+		    );
+		    _doCallback(MESSAGE_FOUND_NETWORK, buffer);
+		}
 
     }
 
@@ -412,7 +414,9 @@ bool JustWifi::_startAP() {
 }
 
 void JustWifi::_doCallback(justwifi_messages_t message, char * parameter) {
-    if (_callback != NULL) _callback(message, parameter);
+    for (unsigned char i=0; i < _callbacks.size(); i++) {
+        (_callbacks[i])(message, parameter);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -551,11 +555,16 @@ void JustWifi::resetReconnectTimeout() {
 
 void JustWifi::setHostname(const char * hostname) {
     strncpy(_hostname, hostname, sizeof(_hostname));
-    WiFi.hostname(hostname);
+    WiFi.hostname(_hostname);
 }
 
+void JustWifi::subscribe(TMessageFunction fn) {
+    _callbacks.push_back(fn);
+}
+
+// Deprecated
 void JustWifi::onMessage(TMessageFunction fn) {
-    _callback = fn;
+    subscribe(fn);
 }
 
 //------------------------------------------------------------------------------

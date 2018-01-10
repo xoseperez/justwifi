@@ -7,6 +7,21 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 
+void mDNSCallback(justwifi_messages_t code, char * parameter) {
+
+    if (code == MESSAGE_CONNECTED) {
+
+        // Configure mDNS
+        if (MDNS.begin((char *) WiFi.hostname().c_str())) {
+            Serial.printf("[MDNS] OK\n");
+        } else {
+            Serial.printf("[MDNS] FAIL\n");
+        }
+
+    }
+
+}
+
 void setup() {
 
     Serial.begin(115200);
@@ -45,8 +60,8 @@ void setup() {
     // Set password protected access point
     // jw.setSoftAP("JUSTWIFI", "PASSWORD");
 
-    // Message callbacks
-    jw.onMessage([](justwifi_messages_t code, char * parameter) {
+    // Debug message callback
+    jw.subscribe([](justwifi_messages_t code, char * parameter) {
 
         if (code == MESSAGE_SCANNING) {
             Serial.printf("[WIFI] Scanning\n");
@@ -82,31 +97,31 @@ void setup() {
 
         if (code == MESSAGE_CONNECTED) {
 
-            Serial.printf("[WIFI] MODE STA -------------------------------------\n");
-            Serial.printf("[WIFI] SSID %s\n", WiFi.SSID().c_str());
-            Serial.printf("[WIFI] IP   %s\n", WiFi.localIP().toString().c_str());
-            Serial.printf("[WIFI] MAC  %s\n", WiFi.macAddress().c_str());
-            Serial.printf("[WIFI] GW   %s\n", WiFi.gatewayIP().toString().c_str());
-            Serial.printf("[WIFI] MASK %s\n", WiFi.subnetMask().toString().c_str());
-            Serial.printf("[WIFI] DNS  %s\n", WiFi.dnsIP().toString().c_str());
-            Serial.printf("[WIFI] HOST %s\n", WiFi.hostname().c_str());
-            Serial.printf("[WIFI] ----------------------------------------------\n");
+            uint8_t * bssid = WiFi.BSSID();
 
-            // Configure mDNS
-            if (MDNS.begin((char *) WiFi.hostname().c_str())) {
-                Serial.printf("[MDNS] OK\n");
-            } else {
-                Serial.printf("[MDNS] FAIL\n");
-            }
+            Serial.printf("[WIFI] MODE STA -------------------------------------\n");
+            Serial.printf("[WIFI] SSID  %s\n", WiFi.SSID().c_str());
+            Serial.printf("[WIFI] BSSID %02X:%02X:%02X:%02X:%02X:%02X\n",
+                bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], bssid[6]
+            );
+            Serial.printf("[WIFI] CH    %d\n", WiFi.channel());
+            Serial.printf("[WIFI] RSSI  %d\n", WiFi.RSSI());
+            Serial.printf("[WIFI] IP    %s\n", WiFi.localIP().toString().c_str());
+            Serial.printf("[WIFI] MAC   %s\n", WiFi.macAddress().c_str());
+            Serial.printf("[WIFI] GW    %s\n", WiFi.gatewayIP().toString().c_str());
+            Serial.printf("[WIFI] MASK  %s\n", WiFi.subnetMask().toString().c_str());
+            Serial.printf("[WIFI] DNS   %s\n", WiFi.dnsIP().toString().c_str());
+            Serial.printf("[WIFI] HOST  %s\n", WiFi.hostname().c_str());
+            Serial.printf("[WIFI] ----------------------------------------------\n");
 
         }
 
         if (code == MESSAGE_ACCESSPOINT_CREATED) {
 
             Serial.printf("[WIFI] MODE AP --------------------------------------\n");
-            Serial.printf("[WIFI] SSID %s\n", jw.getAPSSID().c_str());
-            Serial.printf("[WIFI] IP   %s\n", WiFi.softAPIP().toString().c_str());
-            Serial.printf("[WIFI] MAC  %s\n", WiFi.softAPmacAddress().c_str());
+            Serial.printf("[WIFI] SSID  %s\n", jw.getAPSSID().c_str());
+            Serial.printf("[WIFI] IP    %s\n", WiFi.softAPIP().toString().c_str());
+            Serial.printf("[WIFI] MAC   %s\n", WiFi.softAPmacAddress().c_str());
             Serial.printf("[WIFI] ----------------------------------------------\n");
 
         }
@@ -124,6 +139,9 @@ void setup() {
         }
 
     });
+
+    // mDNS callback
+    jw.subscribe(mDNSCallback);
 
 	Serial.println("[WIFI] Connecting Wifi...");
 

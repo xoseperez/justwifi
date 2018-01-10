@@ -3,6 +3,15 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.6] 2018-01-10
+### Changed
+- Allow to register several callbacks
+- Changes in the information parameters for scanning and connecting callbacks
+- Updated example
+
+### Deprecated
+- onMessage method deprecated in favour of subscribe method
+
 ## [1.1.5] 2017-09-22
 ### Fixed
 - Fix bug when no hostname defined (#1)

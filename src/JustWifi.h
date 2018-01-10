@@ -1,10 +1,10 @@
 /*
 
-JustWifi 1.1.3
+JustWifi 1.1.6
 
 Wifi Manager for ESP8266
 
-Copyright (C) 2016 by Xose Pérez <xose dot perez at gmail dot com>
+Copyright (C) 2016-2018 by Xose Pérez <xose dot perez at gmail dot com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,9 +61,10 @@ typedef struct {
 } network_t;
 
 typedef enum {
-    AP_MODE_OFF,
-    AP_MODE_ALONE,
-    AP_MODE_BOTH
+    AP_MODE_OFF,        // AP mode OFF, only STA
+    AP_MODE_ALONE,      // AP mode only, no STA
+    AP_MODE_BOTH,       // Both AP and STA on
+    AP_MODE_NONE        // WiFi OFF
 } justwifi_ap_modes_t;
 
 typedef enum {
@@ -127,14 +128,17 @@ class JustWifi {
         void setConnectTimeout(unsigned long ms);
         void setReconnectTimeout(unsigned long ms = DEFAULT_RECONNECT_INTERVAL);
         void resetReconnectTimeout();
-        void onMessage(TMessageFunction fn);
+        void subscribe(TMessageFunction fn);
         void loop();
+
+        // Deprecated
+        void onMessage(TMessageFunction fn);
 
     private:
 
         std::vector<network_t> _network_list;
+        std::vector<TMessageFunction> _callbacks;
         network_t _softap { NULL, NULL };
-        TMessageFunction _callback = NULL;
         unsigned long _connect_timeout = DEFAULT_CONNECT_TIMEOUT;
         unsigned long _reconnect_timeout = DEFAULT_RECONNECT_INTERVAL;
         unsigned long _timeout = 0;
