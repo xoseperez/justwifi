@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.6
+JustWifi 1.1.7
 
 Wifi Manager for ESP8266
 
@@ -145,7 +145,7 @@ class JustWifi {
         justwifi_ap_modes_t _ap_mode = AP_MODE_ALONE;
         bool _scan = false;
         uint8_t _bestID;
-        char _hostname[20];
+        char _hostname[32];
 
         justwifi_states_t _connect(uint8_t id = 0xFF);
         justwifi_states_t _startSTA(bool reset);

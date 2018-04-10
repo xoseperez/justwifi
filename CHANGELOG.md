@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.7] 2018-04-10
+### Changed
+- Increasing hostname size to 32 chars
+
 ## [1.1.6] 2018-01-10
 ### Changed
 - Allow to register several callbacks
