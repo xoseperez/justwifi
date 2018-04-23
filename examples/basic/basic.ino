@@ -123,7 +123,7 @@ void setup() {
             Serial.printf("[WIFI] MODE STA -------------------------------------\n");
             Serial.printf("[WIFI] SSID  %s\n", WiFi.SSID().c_str());
             Serial.printf("[WIFI] BSSID %02X:%02X:%02X:%02X:%02X:%02X\n",
-                bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], bssid[6]
+                bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]
             );
             Serial.printf("[WIFI] CH    %d\n", WiFi.channel());
             Serial.printf("[WIFI] RSSI  %d\n", WiFi.RSSI());

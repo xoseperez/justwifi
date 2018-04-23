@@ -105,7 +105,7 @@ class JustWifi {
 
         typedef std::function<void(justwifi_messages_t, char *)> TMessageFunction;
 
-        bool cleanNetworks();
+        void cleanNetworks();
         bool addNetwork(
             const char * ssid,
             const char * pass = NULL,
@@ -122,10 +122,10 @@ class JustWifi {
             const char * netmask = NULL
         );
 
-        bool disconnect();
+        void disconnect();
         bool connected();
-		bool turnOff();
-		bool turnOn();
+        void turnOff();
+        void turnOn();
         bool createAP();
         wl_status_t getStatus();
         String getAPSSID();

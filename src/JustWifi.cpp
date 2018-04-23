@@ -423,7 +423,7 @@ void JustWifi::_doCallback(justwifi_messages_t message, char * parameter) {
 // CONFIGURATION METHODS
 //------------------------------------------------------------------------------
 
-bool JustWifi::cleanNetworks() {
+void JustWifi::cleanNetworks() {
     for (uint8_t i = 0; i < _network_list.size(); i++) {
         network_t entry = _network_list[i];
         if (entry.ssid) free(entry.ssid);
@@ -583,13 +583,13 @@ bool JustWifi::connected() {
     return (WiFi.status() == WL_CONNECTED);
 }
 
-bool JustWifi::disconnect() {
+void JustWifi::disconnect() {
     _timeout = 0;
     WiFi.disconnect();
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
-bool JustWifi::turnOff() {
+void JustWifi::turnOff() {
 	WiFi.disconnect();
 	WiFi.mode(WIFI_OFF);
 	WiFi.forceSleepBegin();
@@ -597,7 +597,7 @@ bool JustWifi::turnOff() {
     _doCallback(MESSAGE_TURNING_OFF);
 }
 
-bool JustWifi::turnOn() {
+void JustWifi::turnOn() {
 	WiFi.forceSleepWake();
 	delay(1);
 	WiFi.mode(WIFI_STA);
