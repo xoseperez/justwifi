@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.7
+JustWifi 1.1.8
 
 Wifi Manager for ESP8266
 
@@ -127,7 +127,6 @@ class JustWifi {
 		bool turnOff();
 		bool turnOn();
         bool createAP();
-        bool createAP(bool captive);
         wl_status_t getStatus();
         String getAPSSID();
         void scanNetworks(bool scan);

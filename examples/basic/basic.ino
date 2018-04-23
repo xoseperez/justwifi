@@ -7,6 +7,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 
+DNSServer dnsServer;
+#define DNS_PORT 53
+
 void mDNSCallback(justwifi_messages_t code, char * parameter) {
 
     if (code == MESSAGE_CONNECTED) {
@@ -20,6 +23,12 @@ void mDNSCallback(justwifi_messages_t code, char * parameter) {
 
     }
 
+}
+
+void CaptivePortalCallback(justwifi_messages_t code, char * parameter) {
+    if (code == MESSAGE_ACCESSPOINT_CREATED) {
+        dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+    }
 }
 
 void setup() {
@@ -77,6 +86,18 @@ void setup() {
 
         if (code == MESSAGE_NO_KNOWN_NETWORKS) {
             Serial.printf("[WIFI] No known networks found\n");
+        }
+
+        if (code == MESSAGE_FOUND_NETWORK) {
+            Serial.printf("[WIFI] %s\n", parameter);
+        }
+
+        if (code == MESSAGE_TURNING_OFF) {
+            Serial.printf("[WIFI] Turning OFF\n");
+        }
+
+        if (code == MESSAGE_TURNING_ON) {
+            Serial.printf("[WIFI] Turning ON\n");
         }
 
         if (code == MESSAGE_FOUND_NETWORK) {
@@ -142,6 +163,7 @@ void setup() {
 
     // mDNS callback
     jw.subscribe(mDNSCallback);
+    jw.subscribe(CaptivePortalCallback);
 
 	Serial.println("[WIFI] Connecting Wifi...");
 

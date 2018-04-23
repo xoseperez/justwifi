@@ -38,7 +38,7 @@ The main features of the JustWifi library are:
 
 ## Usage
 
-TODO
+See examples.
 
 [1]:https://github.com/tzapu/WiFiManager
 [2]:https://github.com/esp8266/Arduino

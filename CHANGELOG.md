@@ -5,7 +5,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.1.8] 2018-04-23
 ### Changed
-- Added option to redirect to captive portal (default: true)
+- Added options for power saving (Thanks to Pablo Pousada Rial)
+- Added Travis CI configuration (Thanks to @lobradov)
 
 ## [1.1.7] 2018-04-10
 ### Changed

@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.7
+JustWifi 1.1.8
 
 Wifi Manager for ESP8266
 
@@ -381,7 +381,7 @@ justwifi_states_t JustWifi::_startSTA(bool reset) {
 
 }
 
-bool JustWifi::_startAP(bool captive) {
+bool JustWifi::_startAP() {
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
@@ -405,10 +405,6 @@ bool JustWifi::_startAP(bool captive) {
         WiFi.softAP(_softap.ssid, _softap.pass);
     } else {
         WiFi.softAP(_softap.ssid);
-    }
-
-    if (captive) {
-        dnsServer.start(DNS_PORT, "*", _softap.ip);
     }
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATED);
@@ -602,24 +598,19 @@ bool JustWifi::turnOff() {
 }
 
 bool JustWifi::turnOn() {
-		WiFi.forceSleepWake();
-		delay( 1 );
-		// Bring up the WiFi connection
-		WiFi.mode( WIFI_STA );
-		setReconnectTimeout(0);
-		_doCallback(MESSAGE_TURNING_ON);
+	WiFi.forceSleepWake();
+	delay(1);
+	WiFi.mode(WIFI_STA);
+	setReconnectTimeout(0);
+	_doCallback(MESSAGE_TURNING_ON);
 }
 
 void JustWifi::setAPMode(justwifi_ap_modes_t mode) {
     _ap_mode = mode;
 }
 
-bool JustWifi::createAP(bool captive) {
-    return _startAP(captive);
-}
-
 bool JustWifi::createAP() {
-    return _startAP(true);
+    return _startAP();
 }
 
 void JustWifi::scanNetworks(bool scan) {
@@ -632,58 +623,58 @@ void JustWifi::loop() {
     static bool reset = true;
     static justwifi_states_t state = STATE_NOT_CONNECTED;
 
-	if (WiFi.getMode() != WIFI_OFF) {
-		if (connecting) {
+	if (WiFi.getMode() == WIFI_OFF) return;
 
-			// _startSTA may return:
-			//  0: Could not connect
-			//  1: Scanning networks
-			//  2: Connecting
-			//  3: Connection successful
-			state = _startSTA(reset);
-			reset = false;
+    if (connecting) {
 
-			if (state == STATE_NOT_CONNECTED) {
-				if (_ap_mode != AP_MODE_OFF) _startAP();
-				connecting = false;
-				_timeout = millis();
-			}
+		// _startSTA may return:
+		//  0: Could not connect
+		//  1: Scanning networks
+		//  2: Connecting
+		//  3: Connection successful
+		state = _startSTA(reset);
+		reset = false;
 
-			if (state == STATE_CONNECTED) {
-				if (_ap_mode == AP_MODE_BOTH) _startAP();
-				connecting = false;
-			}
-
-		} else {
-
-			wl_status_t status = WiFi.status();
-			if (status == WL_DISCONNECTED
-				|| status == WL_NO_SSID_AVAIL
-				|| status == WL_IDLE_STATUS
-				|| status == WL_CONNECT_FAILED) {
-
-				if (
-					(_timeout == 0)
-					|| (
-						(_reconnect_timeout > 0 )
-						&& (_network_list.size() > 0)
-						&& (millis() - _timeout > _reconnect_timeout)
-					)
-				) {
-
-					connecting = true;
-
-				}
-
-			// Capture auto-connections
-			} else if (state != STATE_CONNECTED) {
-				_doCallback(MESSAGE_CONNECTED);
-				state = STATE_CONNECTED;
-			}
-
-			reset = true;
+		if (state == STATE_NOT_CONNECTED) {
+			if (_ap_mode != AP_MODE_OFF) _startAP();
+			connecting = false;
+			_timeout = millis();
 		}
-    }
+
+		if (state == STATE_CONNECTED) {
+			if (_ap_mode == AP_MODE_BOTH) _startAP();
+			connecting = false;
+		}
+
+	} else {
+
+		wl_status_t status = WiFi.status();
+		if (status == WL_DISCONNECTED
+			|| status == WL_NO_SSID_AVAIL
+			|| status == WL_IDLE_STATUS
+			|| status == WL_CONNECT_FAILED) {
+
+			if (
+				(_timeout == 0)
+				|| (
+					(_reconnect_timeout > 0 )
+					&& (_network_list.size() > 0)
+					&& (millis() - _timeout > _reconnect_timeout)
+				)
+			) {
+
+				connecting = true;
+
+			}
+
+		// Capture auto-connections
+		} else if (state != STATE_CONNECTED) {
+			_doCallback(MESSAGE_CONNECTED);
+			state = STATE_CONNECTED;
+		}
+
+		reset = true;
+	}
 
 }
 
