@@ -381,7 +381,7 @@ justwifi_states_t JustWifi::_startSTA(bool reset) {
 
 }
 
-bool JustWifi::_startAP() {
+bool JustWifi::_startAP(bool captive) {
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
@@ -405,6 +405,10 @@ bool JustWifi::_startAP() {
         WiFi.softAP(_softap.ssid, _softap.pass);
     } else {
         WiFi.softAP(_softap.ssid);
+    }
+
+    if (captive) {
+        dnsServer.start(DNS_PORT, "*", _softap.ip);
     }
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATED);
@@ -593,8 +597,12 @@ void JustWifi::setAPMode(justwifi_ap_modes_t mode) {
     _ap_mode = mode;
 }
 
+bool JustWifi::createAP(bool captive) {
+    return _startAP(captive);
+}
+
 bool JustWifi::createAP() {
-    return _startAP();
+    return _startAP(true);
 }
 
 void JustWifi::scanNetworks(bool scan) {
