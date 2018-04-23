@@ -593,6 +593,23 @@ bool JustWifi::disconnect() {
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
+bool JustWifi::turnOff() {
+	WiFi.disconnect();
+	WiFi.mode(WIFI_OFF);
+	WiFi.forceSleepBegin();
+	delay(1);
+    _doCallback(MESSAGE_TURNING_OFF);
+}
+
+bool JustWifi::turnOn() {
+		WiFi.forceSleepWake();
+		delay( 1 );
+		// Bring up the WiFi connection
+		WiFi.mode( WIFI_STA );
+		setReconnectTimeout(0);
+		_doCallback(MESSAGE_TURNING_ON);
+}
+
 void JustWifi::setAPMode(justwifi_ap_modes_t mode) {
     _ap_mode = mode;
 }
@@ -615,56 +632,57 @@ void JustWifi::loop() {
     static bool reset = true;
     static justwifi_states_t state = STATE_NOT_CONNECTED;
 
-    if (connecting) {
+	if (WiFi.getMode() != WIFI_OFF) {
+		if (connecting) {
 
-        // _startSTA may return:
-        //  0: Could not connect
-        //  1: Scanning networks
-        //  2: Connecting
-        //  3: Connection successful
-        state = _startSTA(reset);
-        reset = false;
+			// _startSTA may return:
+			//  0: Could not connect
+			//  1: Scanning networks
+			//  2: Connecting
+			//  3: Connection successful
+			state = _startSTA(reset);
+			reset = false;
 
-        if (state == STATE_NOT_CONNECTED) {
-            if (_ap_mode != AP_MODE_OFF) _startAP();
-            connecting = false;
-            _timeout = millis();
-        }
+			if (state == STATE_NOT_CONNECTED) {
+				if (_ap_mode != AP_MODE_OFF) _startAP();
+				connecting = false;
+				_timeout = millis();
+			}
 
-        if (state == STATE_CONNECTED) {
-            if (_ap_mode == AP_MODE_BOTH) _startAP();
-            connecting = false;
-        }
+			if (state == STATE_CONNECTED) {
+				if (_ap_mode == AP_MODE_BOTH) _startAP();
+				connecting = false;
+			}
 
-    } else {
+		} else {
 
-        wl_status_t status = WiFi.status();
-        if (status == WL_DISCONNECTED
-            || status == WL_NO_SSID_AVAIL
-            || status == WL_IDLE_STATUS
-            || status == WL_CONNECT_FAILED) {
+			wl_status_t status = WiFi.status();
+			if (status == WL_DISCONNECTED
+				|| status == WL_NO_SSID_AVAIL
+				|| status == WL_IDLE_STATUS
+				|| status == WL_CONNECT_FAILED) {
 
-            if (
-                (_timeout == 0)
-                || (
-                    (_reconnect_timeout > 0 )
-                    && (_network_list.size() > 0)
-                    && (millis() - _timeout > _reconnect_timeout)
-                )
-            ) {
+				if (
+					(_timeout == 0)
+					|| (
+						(_reconnect_timeout > 0 )
+						&& (_network_list.size() > 0)
+						&& (millis() - _timeout > _reconnect_timeout)
+					)
+				) {
 
-                connecting = true;
+					connecting = true;
 
-            }
+				}
 
-        // Capture auto-connections
-        } else if (state != STATE_CONNECTED) {
-            _doCallback(MESSAGE_CONNECTED);
-            state = STATE_CONNECTED;
-        }
+			// Capture auto-connections
+			} else if (state != STATE_CONNECTED) {
+				_doCallback(MESSAGE_CONNECTED);
+				state = STATE_CONNECTED;
+			}
 
-        reset = true;
-
+			reset = true;
+		}
     }
 
 }

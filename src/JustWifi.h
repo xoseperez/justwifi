@@ -73,7 +73,8 @@ typedef enum {
     STATE_NOT_CONNECTED,
     STATE_SCANNING,
     STATE_CONNECTING,
-    STATE_CONNECTED
+    STATE_CONNECTED,
+	STATE_OFF
 } justwifi_states_t;
 
 typedef enum {
@@ -90,7 +91,9 @@ typedef enum {
     MESSAGE_ACCESSPOINT_FAILED,
     MESSAGE_ACCESSPOINT_CREATED,
     MESSAGE_DISCONNECTED,
-    MESSAGE_HOSTNAME_ERROR
+    MESSAGE_HOSTNAME_ERROR,
+	MESSAGE_TURNING_OFF,
+	MESSAGE_TURNING_ON
 } justwifi_messages_t;
 
 class JustWifi {
@@ -121,6 +124,8 @@ class JustWifi {
 
         bool disconnect();
         bool connected();
+		bool turnOff();
+		bool turnOn();
         bool createAP();
         bool createAP(bool captive);
         wl_status_t getStatus();
