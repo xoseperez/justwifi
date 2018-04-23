@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <vector>
 #include <ESP8266WiFi.h>
+#include <DNSServer.h>
+
 
 extern "C" {
   #include "user_interface.h"
@@ -120,6 +122,7 @@ class JustWifi {
         bool disconnect();
         bool connected();
         bool createAP();
+        bool createAP(bool captive);
         wl_status_t getStatus();
         String getAPSSID();
         void scanNetworks(bool scan);
