@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.8
+JustWifi 1.1.9
 
 Wifi Manager for ESP8266
 
@@ -27,8 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <vector>
 #include <ESP8266WiFi.h>
-#include <DNSServer.h>
-
 
 extern "C" {
   #include "user_interface.h"

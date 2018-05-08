@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.1.8
+JustWifi 1.1.9
 
 Wifi Manager for ESP8266
 
