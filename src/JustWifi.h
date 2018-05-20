@@ -149,7 +149,7 @@ class JustWifi {
         unsigned long _timeout = 0;
         justwifi_ap_modes_t _ap_mode = AP_MODE_ALONE;
         bool _scan = false;
-        uint8_t _bestID;
+        uint8_t _bestID = 0xFF;
         char _hostname[32];
 
         justwifi_states_t _connect(uint8_t id = 0xFF);
