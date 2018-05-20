@@ -1,21 +1,13 @@
-# Continuous Integration (CI) is the practice, in software
-# engineering, of merging all developer working copies with a shared mainline
-# several times a day < http://docs.platformio.org/en/stable/ci/index.html >
-
 language: python
 python:
-    - "2.7"
-
+    - '2.7'
 sudo: false
 cache:
     directories:
         - "~/.platformio"
-
-env:
-    - PLATFORMIO_CI_SRC=examples/basic/basic.ino
-
 install:
     - pip install -U platformio
-
+before_script:
+    - cd examples/basic
 script:
-    - platformio ci --lib="." --board=nodemcuv2
+    - pio run

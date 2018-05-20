@@ -3,6 +3,9 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.0] 2018-05-20
+- Moved to GitHub
+
 ## [1.1.9] 2018-05-08
 ### Fixed
 - Removed unneeded reference to DNSServer.h
