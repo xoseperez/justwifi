@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
+    _bestID = 0xFF;
     snprintf_P(_hostname, sizeof(_hostname), PSTR("ESP_%06X"), ESP.getChipId());
 }
 
