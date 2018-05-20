@@ -6,6 +6,7 @@
 #include <JustWifi.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <DNSServer.h>
 
 DNSServer dnsServer;
 #define DNS_PORT 53
