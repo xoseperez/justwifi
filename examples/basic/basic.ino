@@ -32,10 +32,97 @@ void CaptivePortalCallback(justwifi_messages_t code, char * parameter) {
     }
 }
 
+void infoCallback(justwifi_messages_t code, char * parameter) {
+
+    if (code == MESSAGE_SCANNING) {
+        Serial.printf("[WIFI] Scanning\n");
+    }
+
+    if (code == MESSAGE_SCAN_FAILED) {
+        Serial.printf("[WIFI] Scan failed\n");
+    }
+
+    if (code == MESSAGE_NO_NETWORKS) {
+        Serial.printf("[WIFI] No networks found\n");
+    }
+
+    if (code == MESSAGE_NO_KNOWN_NETWORKS) {
+        Serial.printf("[WIFI] No known networks found\n");
+    }
+
+    if (code == MESSAGE_FOUND_NETWORK) {
+        Serial.printf("[WIFI] %s\n", parameter);
+    }
+
+    if (code == MESSAGE_TURNING_OFF) {
+        Serial.printf("[WIFI] Turning OFF\n");
+    }
+
+    if (code == MESSAGE_TURNING_ON) {
+        Serial.printf("[WIFI] Turning ON\n");
+    }
+
+    if (code == MESSAGE_CONNECTING) {
+        Serial.printf("[WIFI] Connecting to %s\n", parameter);
+    }
+
+    if (code == MESSAGE_CONNECT_WAITING) {
+        // too much noise
+    }
+
+    if (code == MESSAGE_CONNECT_FAILED) {
+        Serial.printf("[WIFI] Could not connect to %s\n", parameter);
+    }
+
+    if (code == MESSAGE_CONNECTED) {
+
+        uint8_t * bssid = WiFi.BSSID();
+
+        Serial.printf("[WIFI] MODE STA -------------------------------------\n");
+        Serial.printf("[WIFI] SSID  %s\n", WiFi.SSID().c_str());
+        Serial.printf("[WIFI] BSSID %02X:%02X:%02X:%02X:%02X:%02X\n",
+            bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]
+        );
+        Serial.printf("[WIFI] CH    %d\n", WiFi.channel());
+        Serial.printf("[WIFI] RSSI  %d\n", WiFi.RSSI());
+        Serial.printf("[WIFI] IP    %s\n", WiFi.localIP().toString().c_str());
+        Serial.printf("[WIFI] MAC   %s\n", WiFi.macAddress().c_str());
+        Serial.printf("[WIFI] GW    %s\n", WiFi.gatewayIP().toString().c_str());
+        Serial.printf("[WIFI] MASK  %s\n", WiFi.subnetMask().toString().c_str());
+        Serial.printf("[WIFI] DNS   %s\n", WiFi.dnsIP().toString().c_str());
+        Serial.printf("[WIFI] HOST  %s\n", WiFi.hostname().c_str());
+        Serial.printf("[WIFI] ----------------------------------------------\n");
+
+    }
+
+    if (code == MESSAGE_ACCESSPOINT_CREATED) {
+
+        Serial.printf("[WIFI] MODE AP --------------------------------------\n");
+        Serial.printf("[WIFI] SSID  %s\n", jw.getAPSSID().c_str());
+        Serial.printf("[WIFI] IP    %s\n", WiFi.softAPIP().toString().c_str());
+        Serial.printf("[WIFI] MAC   %s\n", WiFi.softAPmacAddress().c_str());
+        Serial.printf("[WIFI] ----------------------------------------------\n");
+
+    }
+
+    if (code == MESSAGE_DISCONNECTED) {
+        Serial.printf("[WIFI] Disconnected\n");
+    }
+
+    if (code == MESSAGE_ACCESSPOINT_CREATING) {
+        Serial.printf("[WIFI] Creating access point\n");
+    }
+
+    if (code == MESSAGE_ACCESSPOINT_FAILED) {
+        Serial.printf("[WIFI] Could not create access point\n");
+    }
+
+};
+
 void setup() {
 
     Serial.begin(115200);
-    delay(10);
+    delay(1000);
 
     // Set WIFI hostname (otherwise it would be ESP_XXXXXX)
     //jw.setHostname("JUSTWIFI");
@@ -56,10 +143,13 @@ void setup() {
     jw.addNetwork("work");
 
     // Do not create Access Point
-    // jw.setAPMode(AP_MODE_OFF);
+    //jw.setAPMode(AP_MODE_OFF);
 
-    // Create Access Point only if STA fails
-    jw.setAPMode(AP_MODE_ALONE);
+    // Create Access Point only
+    //jw.setAPMode(AP_MODE_ONLY);
+
+    // Create Access Point if STA fails
+    jw.setAPMode(AP_MODE_FAILSAFE);
 
     // Create Access Point and STA
     //jw.setAPMode(AP_MODE_BOTH);
@@ -68,101 +158,10 @@ void setup() {
     //jw.setSoftAP("JUSTWIFI");
 
     // Set password protected access point
-    // jw.setSoftAP("JUSTWIFI", "PASSWORD");
+    //jw.setSoftAP("JUSTWIFI", "PASSWORD");
 
-    // Debug message callback
-    jw.subscribe([](justwifi_messages_t code, char * parameter) {
-
-        if (code == MESSAGE_SCANNING) {
-            Serial.printf("[WIFI] Scanning\n");
-        }
-
-        if (code == MESSAGE_SCAN_FAILED) {
-            Serial.printf("[WIFI] Scan failed\n");
-        }
-
-        if (code == MESSAGE_NO_NETWORKS) {
-            Serial.printf("[WIFI] No networks found\n");
-        }
-
-        if (code == MESSAGE_NO_KNOWN_NETWORKS) {
-            Serial.printf("[WIFI] No known networks found\n");
-        }
-
-        if (code == MESSAGE_FOUND_NETWORK) {
-            Serial.printf("[WIFI] %s\n", parameter);
-        }
-
-        if (code == MESSAGE_TURNING_OFF) {
-            Serial.printf("[WIFI] Turning OFF\n");
-        }
-
-        if (code == MESSAGE_TURNING_ON) {
-            Serial.printf("[WIFI] Turning ON\n");
-        }
-
-        if (code == MESSAGE_FOUND_NETWORK) {
-            Serial.printf("[WIFI] %s\n", parameter);
-        }
-
-        if (code == MESSAGE_CONNECTING) {
-            Serial.printf("[WIFI] Connecting to %s\n", parameter);
-        }
-
-        if (code == MESSAGE_CONNECT_WAITING) {
-            // too much noise
-        }
-
-        if (code == MESSAGE_CONNECT_FAILED) {
-            Serial.printf("[WIFI] Could not connect to %s\n", parameter);
-        }
-
-        if (code == MESSAGE_CONNECTED) {
-
-            uint8_t * bssid = WiFi.BSSID();
-
-            Serial.printf("[WIFI] MODE STA -------------------------------------\n");
-            Serial.printf("[WIFI] SSID  %s\n", WiFi.SSID().c_str());
-            Serial.printf("[WIFI] BSSID %02X:%02X:%02X:%02X:%02X:%02X\n",
-                bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]
-            );
-            Serial.printf("[WIFI] CH    %d\n", WiFi.channel());
-            Serial.printf("[WIFI] RSSI  %d\n", WiFi.RSSI());
-            Serial.printf("[WIFI] IP    %s\n", WiFi.localIP().toString().c_str());
-            Serial.printf("[WIFI] MAC   %s\n", WiFi.macAddress().c_str());
-            Serial.printf("[WIFI] GW    %s\n", WiFi.gatewayIP().toString().c_str());
-            Serial.printf("[WIFI] MASK  %s\n", WiFi.subnetMask().toString().c_str());
-            Serial.printf("[WIFI] DNS   %s\n", WiFi.dnsIP().toString().c_str());
-            Serial.printf("[WIFI] HOST  %s\n", WiFi.hostname().c_str());
-            Serial.printf("[WIFI] ----------------------------------------------\n");
-
-        }
-
-        if (code == MESSAGE_ACCESSPOINT_CREATED) {
-
-            Serial.printf("[WIFI] MODE AP --------------------------------------\n");
-            Serial.printf("[WIFI] SSID  %s\n", jw.getAPSSID().c_str());
-            Serial.printf("[WIFI] IP    %s\n", WiFi.softAPIP().toString().c_str());
-            Serial.printf("[WIFI] MAC   %s\n", WiFi.softAPmacAddress().c_str());
-            Serial.printf("[WIFI] ----------------------------------------------\n");
-
-        }
-
-        if (code == MESSAGE_DISCONNECTED) {
-            Serial.printf("[WIFI] Disconnected\n");
-        }
-
-        if (code == MESSAGE_ACCESSPOINT_CREATING) {
-            Serial.printf("[WIFI] Creating access point\n");
-        }
-
-        if (code == MESSAGE_ACCESSPOINT_FAILED) {
-            Serial.printf("[WIFI] Could not create access point\n");
-        }
-
-    });
-
-    // mDNS callback
+    // Callbacks
+    jw.subscribe(infoCallback);
     jw.subscribe(mDNSCallback);
     jw.subscribe(CaptivePortalCallback);
 

@@ -61,10 +61,11 @@ typedef struct {
 } network_t;
 
 typedef enum {
-    AP_MODE_OFF,        // AP mode OFF, only STA
-    AP_MODE_ALONE,      // AP mode only, no STA
-    AP_MODE_BOTH,       // Both AP and STA on
-    AP_MODE_NONE        // WiFi OFF
+    AP_MODE_OFF         = 0,    // AP mode OFF, only STA
+    AP_MODE_FAILSAFE    = 1,    // AP mode if not STA available
+    AP_MODE_ALONE       = 1,    // AP mode if not STA available (deprecated)
+    AP_MODE_BOTH        = 2,    // Both AP and STA on
+    AP_MODE_ONLY        = 3     // AP mode only, even if STA available
 } justwifi_ap_modes_t;
 
 typedef enum {

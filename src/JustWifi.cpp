@@ -539,7 +539,15 @@ bool JustWifi::setSoftAP(
         _softap.netmask.fromString(netmask);
     }
 
+    // https://github.com/xoseperez/justwifi/issues/4
+    if (_softap.pass) {
+        WiFi.softAP(_softap.ssid, _softap.pass);
+    } else {
+        WiFi.softAP(_softap.ssid);
+    }
+
     return true;
+
 }
 
 void JustWifi::setConnectTimeout(unsigned long ms) {
@@ -624,45 +632,77 @@ void JustWifi::loop() {
     static bool reset = true;
     static justwifi_states_t state = STATE_NOT_CONNECTED;
 
-	if (WiFi.getMode() == WIFI_OFF) return;
+    // typedef enum WiFiMode {
+    //  WIFI_OFF = 0,
+    //  WIFI_STA = 1,
+    //  WIFI_AP = 2,
+    //  WIFI_AP_STA = 3
+    // } WiFiMode_t;
+    WiFiMode_t mode = WiFi.getMode();
 
-    if (connecting) {
+    // Only for STA connection!!!
+    // typedef enum {
+    //  WL_NO_SHIELD        = 255,   // for compatibility with WiFi Shield library
+    //  WL_IDLE_STATUS      = 0,
+    //  WL_NO_SSID_AVAIL    = 1,
+    //  WL_SCAN_COMPLETED   = 2,
+    //  WL_CONNECTED        = 3,
+    //  WL_CONNECT_FAILED   = 4,
+    //  WL_CONNECTION_LOST  = 5,
+    //  WL_DISCONNECTED     = 6
+    // } wl_status_t;
+    wl_status_t status = WiFi.status();
+
+    if (WIFI_OFF == mode) return;
+
+    if (AP_MODE_ONLY == _ap_mode) {
+
+        if (WIFI_AP != mode) {
+            _startAP();
+            reset = false;
+            connecting = false;
+            return;
+        }
+
+    } else if (connecting) {
 
 		// _startSTA may return:
-		//  0: Could not connect
-		//  1: Scanning networks
-		//  2: Connecting
-		//  3: Connection successful
+		//  0: Could not connect (STATE_NOT_CONNECTED)
+		//  1: Scanning networks (STATE_SCANNING)
+		//  2: Connecting (STATE_CONNECTING)
+		//  3: Connection successful (STATE_CONNECTED)
+		//  4: WiFi OFF (STATE_OFF)
 		state = _startSTA(reset);
 		reset = false;
 
-		if (state == STATE_NOT_CONNECTED) {
-			if (_ap_mode != AP_MODE_OFF) _startAP();
+        // If connected
+		if (STATE_NOT_CONNECTED == state) {
+			if (AP_MODE_OFF != _ap_mode) _startAP();
 			connecting = false;
 			_timeout = millis();
 		}
 
-		if (state == STATE_CONNECTED) {
-			if (_ap_mode == AP_MODE_BOTH) _startAP();
+		if (STATE_CONNECTED == state) {
+			if (AP_MODE_BOTH == _ap_mode) _startAP();
 			connecting = false;
 		}
 
 	} else {
 
-		wl_status_t status = WiFi.status();
-		if (status == WL_DISCONNECTED
-			|| status == WL_NO_SSID_AVAIL
-			|| status == WL_IDLE_STATUS
-			|| status == WL_CONNECT_FAILED) {
+        if (status == WL_IDLE_STATUS
+            || status == WL_NO_SSID_AVAIL
+            || status == WL_CONNECT_FAILED
+            || status == WL_CONNECTION_LOST
+            || status == WL_DISCONNECTED
+            ) {
 
-			if (
+            if (
 				(_timeout == 0)
 				|| (
 					(_reconnect_timeout > 0 )
 					&& (_network_list.size() > 0)
-					&& (millis() - _timeout > _reconnect_timeout)
-				)
-			) {
+				    && (millis() - _timeout > _reconnect_timeout)
+                )) {
 
 				connecting = true;
 
@@ -675,7 +715,8 @@ void JustWifi::loop() {
 		}
 
 		reset = true;
-	}
+
+    }
 
 }
 
