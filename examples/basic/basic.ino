@@ -7,9 +7,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <DNSServer.h>
+#include <Ticker.h>
 
 DNSServer dnsServer;
 #define DNS_PORT 53
+Ticker ticker0;
+Ticker ticker1;
+Ticker ticker2;
+Ticker ticker3;
 
 void mDNSCallback(justwifi_messages_t code, char * parameter) {
 
@@ -34,6 +39,18 @@ void CaptivePortalCallback(justwifi_messages_t code, char * parameter) {
 
 void infoCallback(justwifi_messages_t code, char * parameter) {
 
+    // -------------------------------------------------------------------------
+
+    if (code == MESSAGE_TURNING_OFF) {
+        Serial.printf("[WIFI] Turning OFF\n");
+    }
+
+    if (code == MESSAGE_TURNING_ON) {
+        Serial.printf("[WIFI] Turning ON\n");
+    }
+
+    // -------------------------------------------------------------------------
+
     if (code == MESSAGE_SCANNING) {
         Serial.printf("[WIFI] Scanning\n");
     }
@@ -54,13 +71,7 @@ void infoCallback(justwifi_messages_t code, char * parameter) {
         Serial.printf("[WIFI] %s\n", parameter);
     }
 
-    if (code == MESSAGE_TURNING_OFF) {
-        Serial.printf("[WIFI] Turning OFF\n");
-    }
-
-    if (code == MESSAGE_TURNING_ON) {
-        Serial.printf("[WIFI] Turning ON\n");
-    }
+    // -------------------------------------------------------------------------
 
     if (code == MESSAGE_CONNECTING) {
         Serial.printf("[WIFI] Connecting to %s\n", parameter);
@@ -95,6 +106,12 @@ void infoCallback(justwifi_messages_t code, char * parameter) {
 
     }
 
+    if (code == MESSAGE_DISCONNECTED) {
+        Serial.printf("[WIFI] Disconnected\n");
+    }
+
+    // -------------------------------------------------------------------------
+
     if (code == MESSAGE_ACCESSPOINT_CREATED) {
 
         Serial.printf("[WIFI] MODE AP --------------------------------------\n");
@@ -105,8 +122,8 @@ void infoCallback(justwifi_messages_t code, char * parameter) {
 
     }
 
-    if (code == MESSAGE_DISCONNECTED) {
-        Serial.printf("[WIFI] Disconnected\n");
+    if (code == MESSAGE_ACCESSPOINT_DESTROYED) {
+        Serial.printf("[WIFI] Disconnecting access point\n");
     }
 
     if (code == MESSAGE_ACCESSPOINT_CREATING) {
@@ -127,6 +144,9 @@ void setup() {
     // Set WIFI hostname (otherwise it would be ESP_XXXXXX)
     //jw.setHostname("JUSTWIFI");
 
+    // Enable STA mode (connecting to a router)
+    jw.enableSTA(false);
+
     // Configure it to scan available networks and connect in order of dBm
     jw.scanNetworks(true);
 
@@ -142,17 +162,8 @@ void setup() {
     // Add an open network
     jw.addNetwork("work");
 
-    // Do not create Access Point
-    //jw.setAPMode(AP_MODE_OFF);
-
-    // Create Access Point only
-    //jw.setAPMode(AP_MODE_ONLY);
-
     // Create Access Point if STA fails
-    jw.setAPMode(AP_MODE_FAILSAFE);
-
-    // Create Access Point and STA
-    //jw.setAPMode(AP_MODE_BOTH);
+    jw.enableAPFailsafe(true);
 
     // Set open access point, do not define to use the hostname
     //jw.setSoftAP("JUSTWIFI");
@@ -167,6 +178,34 @@ void setup() {
 
 	Serial.println("[WIFI] Connecting Wifi...");
 
+    // Actions
+    ticker0.attach(10, status);
+    ticker1.once(5, actionAP);
+    ticker2.once(20, actionSTA);
+    ticker3.once(40, actionNoAP);
+
+}
+
+void actionNoAP() {
+    jw.destroyAP();
+}
+
+void actionAP() {
+    jw.createAP();
+}
+
+void actionSTA() {
+    jw.enableSTA(true);
+}
+
+void actionDisconnect() {
+    jw.disconnect();
+}
+
+void status() {
+    Serial.printf("[WIFI] STA  : %s\n", jw.connected() ? "YES" : "NO");
+    Serial.printf("[WIFI] AP   : %s\n", jw.connectable() ? "YES" : "NO");
+    Serial.printf("[WIFI] #    : %d\n", WiFi.softAPgetStationNum());
 }
 
 void loop() {

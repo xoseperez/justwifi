@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.2.0
+JustWifi 2.0.0
 
 Wifi Manager for ESP8266
 
@@ -49,6 +49,7 @@ typedef struct {
     char * ssid;
     char * pass;
     bool dhcp;
+    bool scanned;
     IPAddress ip;
     IPAddress gw;
     IPAddress netmask;
@@ -61,19 +62,18 @@ typedef struct {
 } network_t;
 
 typedef enum {
-    AP_MODE_OFF         = 0,    // AP mode OFF, only STA
-    AP_MODE_FAILSAFE    = 1,    // AP mode if not STA available
-    AP_MODE_ALONE       = 1,    // AP mode if not STA available (deprecated)
-    AP_MODE_BOTH        = 2,    // Both AP and STA on
-    AP_MODE_ONLY        = 3     // AP mode only, even if STA available
-} justwifi_ap_modes_t;
-
-typedef enum {
-    STATE_NOT_CONNECTED,
-    STATE_SCANNING,
-    STATE_CONNECTING,
-    STATE_CONNECTED,
-	STATE_OFF
+    STATE_IDLE,
+    STATE_SCAN_START,
+    STATE_SCAN_ONGOING,
+    STATE_STA_START,
+    STATE_STA_ONGOING,
+    STATE_STA_FAILED,
+    STATE_STA_SUCCESS,
+    STATE_WPS_START,
+    STATE_WPS_ONGOING,
+    STATE_WPS_FAILED,
+    STATE_WPS_SUCCESS,
+    STATE_FAILSAFE
 } justwifi_states_t;
 
 typedef enum {
@@ -87,13 +87,26 @@ typedef enum {
     MESSAGE_CONNECT_FAILED,
     MESSAGE_CONNECTED,
     MESSAGE_ACCESSPOINT_CREATING,
-    MESSAGE_ACCESSPOINT_FAILED,
     MESSAGE_ACCESSPOINT_CREATED,
+    MESSAGE_ACCESSPOINT_FAILED,
+    MESSAGE_ACCESSPOINT_DESTROYED,
     MESSAGE_DISCONNECTED,
     MESSAGE_HOSTNAME_ERROR,
 	MESSAGE_TURNING_OFF,
-	MESSAGE_TURNING_ON
+	MESSAGE_TURNING_ON,
+    MESSAGE_WPS_START,
+    MESSAGE_WPS_SUCCESS,
+    MESSAGE_WPS_TIMEOUT,
+    MESSAGE_STATION_CONNECTED,
+    MESSAGE_STATION_DISCONNECTED
 } justwifi_messages_t;
+
+enum {
+    RESPONSE_START,
+    RESPONSE_OK,
+    RESPONSE_WAIT,
+    RESPONSE_FAIL
+};
 
 class JustWifi {
 
@@ -121,45 +134,56 @@ class JustWifi {
             const char * netmask = NULL
         );
 
-        void disconnect();
-        bool connected();
-        void turnOff();
-        void turnOn();
-        bool createAP();
-        wl_status_t getStatus();
-        String getAPSSID();
         void scanNetworks(bool scan);
-        void setAPMode(justwifi_ap_modes_t mode);
         void setHostname(const char * hostname);
         void setConnectTimeout(unsigned long ms);
         void setReconnectTimeout(unsigned long ms = DEFAULT_RECONNECT_INTERVAL);
         void resetReconnectTimeout();
         void subscribe(TMessageFunction fn);
-        void loop();
 
-        // Deprecated
-        void onMessage(TMessageFunction fn);
+        wl_status_t getStatus();
+        String getAPSSID();
+
+        void disconnect();
+        bool connected();
+
+        bool createAP();
+        void destroyAP();
+        bool connectable();
+
+        void turnOff();
+        void turnOn();
+        void enableSTA(bool enabled);
+        void enableAPFailsafe(bool enabled);
+
+        void loop();
 
     private:
 
         std::vector<network_t> _network_list;
         std::vector<TMessageFunction> _callbacks;
-        network_t _softap { NULL, NULL };
+
         unsigned long _connect_timeout = DEFAULT_CONNECT_TIMEOUT;
         unsigned long _reconnect_timeout = DEFAULT_RECONNECT_INTERVAL;
         unsigned long _timeout = 0;
-        justwifi_ap_modes_t _ap_mode = AP_MODE_ALONE;
+        uint8_t _currentID;
         bool _scan = false;
-        uint8_t _bestID = 0xFF;
         char _hostname[32];
+        network_t _softap { NULL, NULL };
 
-        justwifi_states_t _connect(uint8_t id = 0xFF);
-        justwifi_states_t _startSTA(bool reset);
-        bool _startAP();
+        justwifi_states_t _state = STATE_IDLE;
+        bool _sta_enabled = true;
+        bool _ap_connected = false;
+        bool _ap_failsafe_enabled = true;
+
+        bool _doAP();
+        uint8_t _doScan();
+        uint8_t _doSTA(uint8_t id = 0xFF);
+
+        void _machine();
         uint8_t _populate(uint8_t networkCount);
-        void _sortByRSSI();
-        void _scanNetworks();
-        int8_t _scanComplete();
+        uint8_t _sortByRSSI();
+        String _MAC2String(const unsigned char* mac);
         String _encodingString(uint8_t security);
         void _doCallback(justwifi_messages_t message, char * parameter = NULL);
 

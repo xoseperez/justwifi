@@ -1,6 +1,6 @@
 /*
 
-JustWifi 1.2.0
+JustWifi 2.0.0
 
 Wifi Manager for ESP8266
 
@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
-    _bestID = 0xFF;
     snprintf_P(_hostname, sizeof(_hostname), PSTR("ESP_%06X"), ESP.getChipId());
 }
 
@@ -43,91 +42,10 @@ JustWifi::~JustWifi() {
 // PRIVATE METHODS
 //------------------------------------------------------------------------------
 
-justwifi_states_t JustWifi::_connect(uint8_t id) {
-
-    static uint8_t networkID;
-    static justwifi_states_t state = STATE_NOT_CONNECTED;
-    static unsigned long timeout;
-
-    // Reset connection process
-    if (id != 0xFF) {
-        state = STATE_NOT_CONNECTED;
-        networkID = id;
-    }
-
-    // Get network
-    network_t entry = _network_list[networkID];
-
-    // No state or previous network failed
-    if (state == STATE_NOT_CONNECTED) {
-
-        WiFi.persistent(false);
-
-        // See https://github.com/esp8266/Arduino/issues/2186
-        if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
-            WiFi.mode(WIFI_OFF);
-        }
-
-        WiFi.mode(WIFI_STA);
-
-        // Configure static options
-        if (!entry.dhcp) {
-            WiFi.config(entry.ip, entry.gw, entry.netmask, entry.dns);
-        }
-
-        // Connect
-		{
-            char buffer[128];
-            snprintf_P(buffer, sizeof(buffer),
-                PSTR("BSSID: %02X:%02X:%02X:%02X:%02X:%02X CH: %02d, RSSI: %3d, SEC: %s, SSID: %s"),
-                entry.bssid[0], entry.bssid[1], entry.bssid[2], entry.bssid[3], entry.bssid[4], entry.bssid[5],
-                entry.channel,
-                entry.rssi,
-                _encodingString(entry.security).c_str(),
-                entry.ssid
-            );
-		    _doCallback(MESSAGE_CONNECTING, buffer);
-        }
-
-        if (entry.channel == 0) {
-            WiFi.begin(entry.ssid, entry.pass);
-        } else {
-            WiFi.begin(entry.ssid, entry.pass, entry.channel, entry.bssid);
-        }
-
-        timeout = millis();
-        return (state = STATE_CONNECTING);
-
-    }
-
-    // Connected?
-    if (WiFi.status() == WL_CONNECTED) {
-
-        // Autoconnect only if DHCP, since it doesn't store static IP data
-        WiFi.setAutoConnect(entry.dhcp);
-
-        WiFi.setAutoReconnect(true);
-        _doCallback(MESSAGE_CONNECTED);
-        return (state = STATE_CONNECTED);
-
-    }
-
-    // Check timeout
-    if (millis() - timeout > _connect_timeout) {
-        _doCallback(MESSAGE_CONNECT_FAILED, entry.ssid);
-        return (state = STATE_NOT_CONNECTED);
-    }
-
-    // Still waiting
-    _doCallback(MESSAGE_CONNECT_WAITING);
-    return state;
-
-}
-
-void JustWifi::_sortByRSSI() {
+uint8_t JustWifi::_sortByRSSI() {
 
     bool first = true;
-    _bestID = 0xFF;
+    uint8_t bestID = 0xFF;
 
     for (uint8_t i = 0; i < _network_list.size(); i++) {
 
@@ -139,18 +57,18 @@ void JustWifi::_sortByRSSI() {
         // Empty list
         if (first) {
             first = false;
-            _bestID = i;
+            bestID = i;
             entry->next = 0xFF;
 
         // The best so far
-        } else if (entry->rssi > _network_list[_bestID].rssi) {
-            entry->next = _bestID;
-            _bestID = i;
+        } else if (entry->rssi > _network_list[bestID].rssi) {
+            entry->next = bestID;
+            bestID = i;
 
         // Walk the list
         } else {
 
-            network_t * current = &_network_list[_bestID];
+            network_t * current = &_network_list[bestID];
             while (current->next != 0xFF) {
                 if (entry->rssi > _network_list[current->next].rssi) {
                     entry->next = current->next;
@@ -170,6 +88,8 @@ void JustWifi::_sortByRSSI() {
 
     }
 
+    return bestID;
+
 }
 
 String JustWifi::_encodingString(uint8_t security) {
@@ -187,6 +107,7 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
     // Reset RSSI to disable networks that have disappeared
     for (uint8_t j = 0; j < _network_list.size(); j++) {
         _network_list[j].rssi = 0;
+        _network_list[j].scanned = false;
     }
 
     String ssid_scan;
@@ -219,6 +140,7 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
                     entry->rssi = rssi_scan;
                     entry->security = sec_scan;
                     entry->channel = chan_scan;
+                    entry->scanned = true;
                     memcpy((void*) &entry->bssid, (void*) BSSID_scan, sizeof(entry->bssid));
                 }
 
@@ -250,139 +172,99 @@ uint8_t JustWifi::_populate(uint8_t networkCount) {
 
 }
 
-void JustWifi::_scanNetworks() {
-    WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    WiFi.scanNetworks(true, true);
-}
+uint8_t JustWifi::_doSTA(uint8_t id) {
 
-int8_t JustWifi::_scanComplete() {
+    static uint8_t networkID;
+    static uint8_t state = RESPONSE_START;
+    static unsigned long timeout;
 
-    static bool scanning = false;
-
-    // Check if scanning
-    int8_t scanResult = WiFi.scanComplete();
-    if (scanResult == WIFI_SCAN_RUNNING) {
-        if (!scanning) {
-            _doCallback(MESSAGE_SCANNING);
-            scanning = true;
-        }
-        return WIFI_SCAN_RUNNING;
+    // Reset connection process
+    if (id != 0xFF) {
+        state = RESPONSE_START;
+        networkID = id;
     }
 
-    scanning = false;
+    // Get network
+    network_t entry = _network_list[networkID];
 
-    if (scanResult == WIFI_SCAN_FAILED) {
-        _doCallback(MESSAGE_SCAN_FAILED);
-        return WIFI_SCAN_FAILED;
-    }
+    // No state or previous network failed
+    if (RESPONSE_START == state) {
 
-    // Check networks
-    if (scanResult == 0) {
-        _doCallback(MESSAGE_NO_NETWORKS);
-        return 0;
-    }
+        WiFi.persistent(false);
 
-    // Populate network list
-    uint8_t count = _populate(scanResult);
-
-    if (count == 0) {
-        _doCallback(MESSAGE_NO_KNOWN_NETWORKS);
-    }
-
-    // Free memory
-    WiFi.scanDelete();
-
-    // Sort by RSSI
-    _sortByRSSI();
-
-    // Return the number of known available networks
-    return count;
-
-}
-
-// _startSTA states:
-//  0: Starting / No Connection
-//  1: Scanning networks
-//  2: Connecting
-//  3: Connection successful
-justwifi_states_t JustWifi::_startSTA(bool reset) {
-
-    static uint8_t currentID;
-    static justwifi_states_t state = STATE_NOT_CONNECTED;
-
-    if (_network_list.size() == 0) {
-        return (state = STATE_NOT_CONNECTED);
-    }
-
-    // Reset process
-    if (reset) state = STATE_NOT_CONNECTED;
-
-    // Starting over
-    if (state == STATE_NOT_CONNECTED) {
-
-        WiFi.enableSTA(true);
-
-        if (_scan) {
-            _scanNetworks();
-            return (state = STATE_SCANNING);
+        // See https://github.com/esp8266/Arduino/issues/2186
+        if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
+            WiFi.mode(WIFI_OFF);
         }
 
-        return (state = _connect(currentID = 0));
-
-    }
-
-    // Scanning
-    if (state == STATE_SCANNING) {
-
-        int8_t scanResult = _scanComplete();
-
-        if (scanResult == WIFI_SCAN_FAILED) {
-            _scanNetworks();
-        }
-
-        if (scanResult < 0) {
-            return state;
-        }
-
-        if (scanResult == 0) {
-            return (state = STATE_NOT_CONNECTED);
-        }
-
-        return (state = _connect(currentID = _bestID));
-
-    }
-
-    // Connecting
-    if (state == STATE_CONNECTING) {
-
-        state = _connect();
-
-        if (state != STATE_NOT_CONNECTED) {
-            return state;
-        }
-
-        if (_scan) {
-            currentID = _network_list[currentID].next;
-            if (currentID == 0xFF) {
-                return (state = STATE_NOT_CONNECTED);
-            }
+        if (connectable()) {
+            WiFi.mode(WIFI_AP_STA);
         } else {
-            currentID++;
-            if (currentID == _network_list.size()) {
-                return (state = STATE_NOT_CONNECTED);
-            }
+            WiFi.mode(WIFI_STA);
         }
 
-        return (state = _connect(currentID));
+        // Configure static options
+        if (!entry.dhcp) {
+            WiFi.config(entry.ip, entry.gw, entry.netmask, entry.dns);
+        }
+
+        // Connect
+		{
+            char buffer[128];
+            if (entry.scanned) {
+                snprintf_P(buffer, sizeof(buffer),
+                    PSTR("BSSID: %02X:%02X:%02X:%02X:%02X:%02X CH: %02d, RSSI: %3d, SEC: %s, SSID: %s"),
+                    entry.bssid[0], entry.bssid[1], entry.bssid[2], entry.bssid[3], entry.bssid[4], entry.bssid[5],
+                    entry.channel,
+                    entry.rssi,
+                    _encodingString(entry.security).c_str(),
+                    entry.ssid
+                );
+            } else {
+                snprintf_P(buffer, sizeof(buffer), PSTR("SSID: %s"), entry.ssid);
+            }
+		    _doCallback(MESSAGE_CONNECTING, buffer);
+        }
+
+        if (entry.channel == 0) {
+            WiFi.begin(entry.ssid, entry.pass);
+        } else {
+            WiFi.begin(entry.ssid, entry.pass, entry.channel, entry.bssid);
+        }
+
+        timeout = millis();
+        return (state = RESPONSE_WAIT);
 
     }
 
+    // Connected?
+    if (WiFi.status() == WL_CONNECTED) {
+
+        // Autoconnect only if DHCP, since it doesn't store static IP data
+        WiFi.setAutoConnect(entry.dhcp);
+
+        WiFi.setAutoReconnect(true);
+        _doCallback(MESSAGE_CONNECTED);
+        return (state = RESPONSE_OK);
+
+    }
+
+    // Check timeout
+    if (millis() - timeout > _connect_timeout) {
+        _doCallback(MESSAGE_CONNECT_FAILED, entry.ssid);
+        return (state = RESPONSE_FAIL);
+    }
+
+    // Still waiting
+    _doCallback(MESSAGE_CONNECT_WAITING);
     return state;
 
 }
 
-bool JustWifi::_startAP() {
+bool JustWifi::_doAP() {
+
+    // If already created do nothing
+    if (0 != (uint32_t) WiFi.softAPIP()) return true;
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
@@ -410,7 +292,66 @@ bool JustWifi::_startAP() {
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATED);
 
+    _ap_connected = true;
     return true;
+
+}
+
+uint8_t JustWifi::_doScan() {
+
+    static bool scanning = false;
+
+    // If not scanning, start scan
+    if (false == scanning) {
+        WiFi.enableSTA(true);
+        WiFi.disconnect();
+        if (connectable()) {
+            WiFi.mode(WIFI_AP_STA);
+        } else {
+            WiFi.mode(WIFI_STA);
+        }
+        WiFi.scanNetworks(true, true);
+        _doCallback(MESSAGE_SCANNING);
+        scanning = true;
+        return RESPONSE_WAIT;
+    }
+
+    // Check if scanning
+    int8_t scanResult = WiFi.scanComplete();
+    if (WIFI_SCAN_RUNNING == scanResult) {
+        return RESPONSE_WAIT;
+    }
+
+    // Scan finished
+    scanning = false;
+
+    // Sometimes the scan fails,
+    // this will force the scan to restart
+    if (WIFI_SCAN_FAILED == scanResult) {
+        _doCallback(MESSAGE_SCAN_FAILED);
+        return RESPONSE_WAIT;
+    }
+
+    // Check networks
+    if (0 == scanResult) {
+        _doCallback(MESSAGE_NO_NETWORKS);
+        return RESPONSE_FAIL;
+    }
+
+    // Populate network list
+    uint8_t count = _populate(scanResult);
+
+    // Free memory
+    WiFi.scanDelete();
+
+    if (0 == count) {
+        _doCallback(MESSAGE_NO_KNOWN_NETWORKS);
+        return RESPONSE_FAIL;
+    }
+
+    // Sort networks by RSSI
+    _currentID = _sortByRSSI();
+    return RESPONSE_OK;
 
 }
 
@@ -418,6 +359,127 @@ void JustWifi::_doCallback(justwifi_messages_t message, char * parameter) {
     for (unsigned char i=0; i < _callbacks.size(); i++) {
         (_callbacks[i])(message, parameter);
     }
+}
+
+String JustWifi::_MAC2String(const unsigned char* mac) {
+    char buffer[20];
+    snprintf(
+        buffer, sizeof(buffer),
+        "%02x:%02x:%02x:%02x:%02x:%02x",
+        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
+    );
+    return String(buffer);
+}
+
+void JustWifi::_machine() {
+
+    switch(_state) {
+
+        // ---------------------------------------------------------------------
+
+        case STATE_IDLE:
+
+            // Should we connect in STA mode?
+            if (WiFi.status() != WL_CONNECTED) {
+                if (_sta_enabled) {
+                    if (_network_list.size() > 0) {
+                        if ((0 == _timeout) || ((_reconnect_timeout > 0) && (millis() - _timeout > _reconnect_timeout))) {
+                            _currentID = 0;
+                            _state = _scan ? STATE_SCAN_START : STATE_STA_START;
+                        }
+                    }
+                }
+            }
+
+            break;
+
+        // ---------------------------------------------------------------------
+
+        case STATE_SCAN_START:
+            _doScan();
+            _state = STATE_SCAN_ONGOING;
+            break;
+
+        case STATE_SCAN_ONGOING:
+            {
+                uint8_t response = _doScan();
+                if (RESPONSE_OK == response) {
+                    _state = STATE_STA_START;
+                } else if (RESPONSE_FAIL == response) {
+                    _state = STATE_FAILSAFE;
+                }
+            }
+            break;
+
+        // ---------------------------------------------------------------------
+
+        case STATE_STA_START:
+            _doSTA(_currentID);
+            _state = STATE_STA_ONGOING;
+            break;
+
+        case STATE_STA_ONGOING:
+            {
+                uint8_t response = _doSTA();
+                if (RESPONSE_OK == response) {
+                    _state = STATE_STA_SUCCESS;
+                } else if (RESPONSE_FAIL == response) {
+                    _state = STATE_STA_START;
+                    if (_scan) {
+                        _currentID = _network_list[_currentID].next;
+                        if (_currentID == 0xFF) {
+                            _state = STATE_STA_FAILED;
+                        }
+                    } else {
+                        _currentID++;
+                        if (_currentID == _network_list.size()) {
+                            _state = STATE_STA_FAILED;
+                        }
+                    }
+                }
+            }
+            break;
+
+        case STATE_STA_FAILED:
+            _state = STATE_FAILSAFE;
+            break;
+
+        case STATE_STA_SUCCESS:
+            _state = STATE_IDLE;
+            break;
+
+        // ---------------------------------------------------------------------
+
+        case STATE_WPS_START:
+            _state = STATE_IDLE;
+            break;
+
+        case STATE_WPS_ONGOING:
+            _state = STATE_IDLE;
+            break;
+
+        case STATE_WPS_FAILED:
+            _state = STATE_IDLE;
+            break;
+
+        case STATE_WPS_SUCCESS:
+            _state = STATE_IDLE;
+            break;
+
+        // ---------------------------------------------------------------------
+
+        case STATE_FAILSAFE:
+            if (_ap_failsafe_enabled) createAP();
+            _timeout = millis();
+            _state = STATE_IDLE;
+            break;
+
+        default:
+            _state = STATE_IDLE;
+            break;
+
+    }
+
 }
 
 //------------------------------------------------------------------------------
@@ -571,11 +633,6 @@ void JustWifi::subscribe(TMessageFunction fn) {
     _callbacks.push_back(fn);
 }
 
-// Deprecated
-void JustWifi::onMessage(TMessageFunction fn) {
-    subscribe(fn);
-}
-
 //------------------------------------------------------------------------------
 // PUBLIC METHODS
 //------------------------------------------------------------------------------
@@ -592,6 +649,10 @@ bool JustWifi::connected() {
     return (WiFi.status() == WL_CONNECTED);
 }
 
+bool JustWifi::connectable() {
+    return _ap_connected;
+}
+
 void JustWifi::disconnect() {
     _timeout = 0;
     WiFi.disconnect();
@@ -604,6 +665,7 @@ void JustWifi::turnOff() {
 	WiFi.forceSleepBegin();
 	delay(1);
     _doCallback(MESSAGE_TURNING_OFF);
+    _sta_enabled = false;
 }
 
 void JustWifi::turnOn() {
@@ -612,112 +674,35 @@ void JustWifi::turnOn() {
 	WiFi.mode(WIFI_STA);
 	setReconnectTimeout(0);
 	_doCallback(MESSAGE_TURNING_ON);
-}
-
-void JustWifi::setAPMode(justwifi_ap_modes_t mode) {
-    _ap_mode = mode;
+    _state = STATE_IDLE;
+    _sta_enabled = true;
 }
 
 bool JustWifi::createAP() {
-    return _startAP();
+    return _doAP();
 }
+
+void JustWifi::destroyAP() {
+    WiFi.softAPdisconnect();
+    _ap_connected = false;
+    _doCallback(MESSAGE_ACCESSPOINT_DESTROYED);
+}
+
+void JustWifi::enableSTA(bool enabled) {
+    _sta_enabled = enabled;
+}
+
+void JustWifi::enableAPFailsafe(bool enabled) {
+    _ap_failsafe_enabled = enabled;
+}
+
 
 void JustWifi::scanNetworks(bool scan) {
     _scan = scan;
 }
 
 void JustWifi::loop() {
-
-    static bool connecting = false;
-    static bool reset = true;
-    static justwifi_states_t state = STATE_NOT_CONNECTED;
-
-    // typedef enum WiFiMode {
-    //  WIFI_OFF = 0,
-    //  WIFI_STA = 1,
-    //  WIFI_AP = 2,
-    //  WIFI_AP_STA = 3
-    // } WiFiMode_t;
-    WiFiMode_t mode = WiFi.getMode();
-
-    // Only for STA connection!!!
-    // typedef enum {
-    //  WL_NO_SHIELD        = 255,   // for compatibility with WiFi Shield library
-    //  WL_IDLE_STATUS      = 0,
-    //  WL_NO_SSID_AVAIL    = 1,
-    //  WL_SCAN_COMPLETED   = 2,
-    //  WL_CONNECTED        = 3,
-    //  WL_CONNECT_FAILED   = 4,
-    //  WL_CONNECTION_LOST  = 5,
-    //  WL_DISCONNECTED     = 6
-    // } wl_status_t;
-    wl_status_t status = WiFi.status();
-
-    if (WIFI_OFF == mode) return;
-
-    if (AP_MODE_ONLY == _ap_mode) {
-
-        if (WIFI_AP != mode) {
-            _startAP();
-            reset = false;
-            connecting = false;
-            return;
-        }
-
-    } else if (connecting) {
-
-		// _startSTA may return:
-		//  0: Could not connect (STATE_NOT_CONNECTED)
-		//  1: Scanning networks (STATE_SCANNING)
-		//  2: Connecting (STATE_CONNECTING)
-		//  3: Connection successful (STATE_CONNECTED)
-		//  4: WiFi OFF (STATE_OFF)
-		state = _startSTA(reset);
-		reset = false;
-
-        // If connected
-		if (STATE_NOT_CONNECTED == state) {
-			if (AP_MODE_OFF != _ap_mode) _startAP();
-			connecting = false;
-			_timeout = millis();
-		}
-
-		if (STATE_CONNECTED == state) {
-			if (AP_MODE_BOTH == _ap_mode) _startAP();
-			connecting = false;
-		}
-
-	} else {
-
-        if (status == WL_IDLE_STATUS
-            || status == WL_NO_SSID_AVAIL
-            || status == WL_CONNECT_FAILED
-            || status == WL_CONNECTION_LOST
-            || status == WL_DISCONNECTED
-            ) {
-
-            if (
-				(_timeout == 0)
-				|| (
-					(_reconnect_timeout > 0 )
-					&& (_network_list.size() > 0)
-				    && (millis() - _timeout > _reconnect_timeout)
-                )) {
-
-				connecting = true;
-
-			}
-
-		// Capture auto-connections
-		} else if (state != STATE_CONNECTED) {
-			_doCallback(MESSAGE_CONNECTED);
-			state = STATE_CONNECTED;
-		}
-
-		reset = true;
-
-    }
-
+    _machine();
 }
 
 JustWifi jw;
