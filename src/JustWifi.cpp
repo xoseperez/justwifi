@@ -522,7 +522,12 @@ void JustWifi::_machine() {
         case STATE_WPS_SUCCESS:
             _doCallback(MESSAGE_WPS_SUCCESS);
             wifi_wps_disable();
-            wifi_station_connect();
+            addNetwork(
+                WiFi.SSID().c_str(),
+                WiFi.psk().c_str(),
+                NULL, NULL, NULL, NULL,
+                true
+            );
             _state = STATE_IDLE;
             break;
 
@@ -561,7 +566,8 @@ bool JustWifi::addNetwork(
     const char * ip,
     const char * gw,
     const char * netmask,
-    const char * dns
+    const char * dns,
+    bool front
 ) {
 
     network_t new_network;
@@ -611,9 +617,14 @@ bool JustWifi::addNetwork(
     new_network.security = 0;
     new_network.channel = 0;
     new_network.next = 0xFF;
+    new_network.scanned = false;
 
     // Store data
-    _network_list.push_back(new_network);
+    if (front) {
+        _network_list.insert(_network_list.begin(), new_network);
+    } else {
+        _network_list.push_back(new_network);
+    }
     return true;
 
 }

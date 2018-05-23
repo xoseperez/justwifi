@@ -124,7 +124,8 @@ class JustWifi {
             const char * ip = NULL,
             const char * gw = NULL,
             const char * netmask = NULL,
-            const char * dns = NULL
+            const char * dns = NULL,
+            bool front = false
         );
         bool setSoftAP(
             const char * ssid,
