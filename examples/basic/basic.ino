@@ -172,7 +172,7 @@ void setup() {
     jw.addNetwork("work");
 
     // Create Access Point if STA fails
-    jw.enableAPFailsafe(true);
+    jw.enableAPFallback(true);
 
     // Set open access point, do not define to use the hostname
     //jw.setSoftAP("JUSTWIFI");

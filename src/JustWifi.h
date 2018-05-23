@@ -73,7 +73,7 @@ typedef enum {
     STATE_WPS_ONGOING,
     STATE_WPS_FAILED,
     STATE_WPS_SUCCESS,
-    STATE_FAILSAFE
+    STATE_FALLBACK
 } justwifi_states_t;
 
 typedef enum {
@@ -156,7 +156,7 @@ class JustWifi {
         void turnOff();
         void turnOn();
         void enableSTA(bool enabled);
-        void enableAPFailsafe(bool enabled);
+        void enableAPFallback(bool enabled);
 
         void loop();
 
@@ -176,7 +176,7 @@ class JustWifi {
         justwifi_states_t _state = STATE_IDLE;
         bool _sta_enabled = true;
         bool _ap_connected = false;
-        bool _ap_failsafe_enabled = true;
+        bool _ap_fallback_enabled = true;
 
         bool _doAP();
         uint8_t _doScan();

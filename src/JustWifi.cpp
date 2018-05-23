@@ -417,7 +417,7 @@ void JustWifi::_machine() {
                 if (RESPONSE_OK == response) {
                     _state = STATE_STA_START;
                 } else if (RESPONSE_FAIL == response) {
-                    _state = STATE_FAILSAFE;
+                    _state = STATE_FALLBACK;
                 }
             }
             break;
@@ -452,7 +452,7 @@ void JustWifi::_machine() {
             break;
 
         case STATE_STA_FAILED:
-            _state = STATE_FAILSAFE;
+            _state = STATE_FALLBACK;
             break;
 
         case STATE_STA_SUCCESS:
@@ -528,8 +528,8 @@ void JustWifi::_machine() {
 
         // ---------------------------------------------------------------------
 
-        case STATE_FAILSAFE:
-            if (_ap_failsafe_enabled) createAP();
+        case STATE_FALLBACK:
+            if (_ap_fallback_enabled) createAP();
             _timeout = millis();
             _state = STATE_IDLE;
             break;
@@ -756,8 +756,8 @@ void JustWifi::enableSTA(bool enabled) {
     _sta_enabled = enabled;
 }
 
-void JustWifi::enableAPFailsafe(bool enabled) {
-    _ap_failsafe_enabled = enabled;
+void JustWifi::enableAPFallback(bool enabled) {
+    _ap_fallback_enabled = enabled;
 }
 
 
