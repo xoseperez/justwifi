@@ -92,11 +92,11 @@ typedef enum {
     MESSAGE_ACCESSPOINT_DESTROYED,
     MESSAGE_DISCONNECTED,
     MESSAGE_HOSTNAME_ERROR,
-	MESSAGE_TURNING_OFF,
-	MESSAGE_TURNING_ON,
+    MESSAGE_TURNING_OFF,
+    MESSAGE_TURNING_ON,
     MESSAGE_WPS_START,
     MESSAGE_WPS_SUCCESS,
-    MESSAGE_WPS_TIMEOUT,
+    MESSAGE_WPS_ERROR,
     MESSAGE_STATION_CONNECTED,
     MESSAGE_STATION_DISCONNECTED
 } justwifi_messages_t;
@@ -146,6 +146,8 @@ class JustWifi {
 
         void disconnect();
         bool connected();
+
+        void startWPS();
 
         bool createAP();
         void destroyAP();

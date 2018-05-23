@@ -7,14 +7,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <DNSServer.h>
-#include <Ticker.h>
 
 DNSServer dnsServer;
 #define DNS_PORT 53
-Ticker ticker0;
-Ticker ticker1;
-Ticker ticker2;
-Ticker ticker3;
 
 void mDNSCallback(justwifi_messages_t code, char * parameter) {
 
@@ -134,6 +129,20 @@ void infoCallback(justwifi_messages_t code, char * parameter) {
         Serial.printf("[WIFI] Could not create access point\n");
     }
 
+    // -------------------------------------------------------------------------
+
+    if (code == MESSAGE_WPS_START) {
+        Serial.printf("[WIFI] WPS started\n");
+    }
+
+    if (code == MESSAGE_WPS_SUCCESS) {
+        Serial.printf("[WIFI] WPS succeded!\n");
+    }
+
+    if (code == MESSAGE_WPS_ERROR) {
+        Serial.printf("[WIFI] WPS failed\n");
+    }
+
 };
 
 void setup() {
@@ -145,7 +154,7 @@ void setup() {
     //jw.setHostname("JUSTWIFI");
 
     // Enable STA mode (connecting to a router)
-    jw.enableSTA(false);
+    jw.enableSTA(true);
 
     // Configure it to scan available networks and connect in order of dBm
     jw.scanNetworks(true);
@@ -176,36 +185,11 @@ void setup() {
     jw.subscribe(mDNSCallback);
     jw.subscribe(CaptivePortalCallback);
 
-	Serial.println("[WIFI] Connecting Wifi...");
+    Serial.println("[WIFI] Connecting Wifi...");
 
-    // Actions
-    ticker0.attach(10, status);
-    ticker1.once(5, actionAP);
-    ticker2.once(20, actionSTA);
-    ticker3.once(40, actionNoAP);
+    // Start WPS join
+    // jw.startWPS();
 
-}
-
-void actionNoAP() {
-    jw.destroyAP();
-}
-
-void actionAP() {
-    jw.createAP();
-}
-
-void actionSTA() {
-    jw.enableSTA(true);
-}
-
-void actionDisconnect() {
-    jw.disconnect();
-}
-
-void status() {
-    Serial.printf("[WIFI] STA  : %s\n", jw.connected() ? "YES" : "NO");
-    Serial.printf("[WIFI] AP   : %s\n", jw.connectable() ? "YES" : "NO");
-    Serial.printf("[WIFI] #    : %d\n", WiFi.softAPgetStationNum());
 }
 
 void loop() {

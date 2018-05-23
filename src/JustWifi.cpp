@@ -22,7 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "JustWifi.h"
+#include "user_interface.h"
 #include <functional>
+
+// -----------------------------------------------------------------------------
+// WPS callbacks
+// -----------------------------------------------------------------------------
+
+wps_cb_status _jw_wps_status;
+
+void _jw_wps_status_cb(wps_cb_status status) {
+    _jw_wps_status = status;
+}
 
 //------------------------------------------------------------------------------
 // CONSTRUCTOR
@@ -451,18 +462,67 @@ void JustWifi::_machine() {
         // ---------------------------------------------------------------------
 
         case STATE_WPS_START:
-            _state = STATE_IDLE;
+
+            _doCallback(MESSAGE_WPS_START);
+
+            // See https://github.com/esp8266/Arduino/issues/2186
+            if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
+                WiFi.mode(WIFI_OFF);
+            }
+            WiFi.mode(WIFI_STA);
+
+            if (!WiFi.enableSTA(true)) {
+                _state = STATE_WPS_FAILED;
+                return;
+            }
+
+            WiFi.disconnect();
+
+            if (!wifi_wps_disable()) {
+                _state = STATE_WPS_FAILED;
+                return;
+            }
+
+            // so far only WPS_TYPE_PBC is supported (SDK 1.2.0)
+            if (!wifi_wps_enable(WPS_TYPE_PBC)) {
+                _state = STATE_WPS_FAILED;
+                return;
+            }
+
+            _jw_wps_status = (wps_cb_status) 5;
+            if (!wifi_set_wps_cb((wps_st_cb_t) &_jw_wps_status_cb)) {
+                _state = STATE_WPS_FAILED;
+                return;
+            }
+
+            if (!wifi_wps_start()) {
+                _state = STATE_WPS_FAILED;
+                return;
+            }
+
+            _state = STATE_WPS_ONGOING;
             break;
 
         case STATE_WPS_ONGOING:
-            _state = STATE_IDLE;
+            if (5 == _jw_wps_status) {
+                // Still ongoing
+            } else if (WPS_CB_ST_SUCCESS == _jw_wps_status) {
+                _state = STATE_WPS_SUCCESS;
+            } else {
+                _state = STATE_WPS_FAILED;
+            }
             break;
 
         case STATE_WPS_FAILED:
+            _doCallback(MESSAGE_WPS_ERROR);
+            wifi_wps_disable();
             _state = STATE_IDLE;
             break;
 
         case STATE_WPS_SUCCESS:
+            _doCallback(MESSAGE_WPS_SUCCESS);
+            wifi_wps_disable();
+            wifi_station_connect();
             _state = STATE_IDLE;
             break;
 
@@ -680,6 +740,10 @@ void JustWifi::turnOn() {
 
 bool JustWifi::createAP() {
     return _doAP();
+}
+
+void JustWifi::startWPS() {
+    _state = STATE_WPS_START;
 }
 
 void JustWifi::destroyAP() {
