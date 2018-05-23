@@ -274,8 +274,8 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 
 bool JustWifi::_doAP() {
 
-    // If already created do nothing
-    if (0 != (uint32_t) WiFi.softAPIP()) return true;
+    // If already created recreate
+    if (_ap_connected) destroyAP();
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
@@ -384,6 +384,14 @@ String JustWifi::_MAC2String(const unsigned char* mac) {
 
 void JustWifi::_machine() {
 
+    #if false
+        static unsigned char previous = 0xFF;
+        if (_state != previous) {
+            previous = _state;
+            Serial.printf("New state: %u\n", _state);
+        }
+    #endif
+
     switch(_state) {
 
         // ---------------------------------------------------------------------
@@ -392,15 +400,24 @@ void JustWifi::_machine() {
 
             // Should we connect in STA mode?
             if (WiFi.status() != WL_CONNECTED) {
+
                 if (_sta_enabled) {
                     if (_network_list.size() > 0) {
                         if ((0 == _timeout) || ((_reconnect_timeout > 0) && (millis() - _timeout > _reconnect_timeout))) {
                             _currentID = 0;
                             _state = _scan ? STATE_SCAN_START : STATE_STA_START;
+                            return;
                         }
                     }
                 }
+
+                // Fallback
+                if (!_ap_connected & _ap_fallback_enabled) {
+                    _state = STATE_FALLBACK;
+                }
+
             }
+
 
             break;
 
@@ -534,7 +551,7 @@ void JustWifi::_machine() {
         // ---------------------------------------------------------------------
 
         case STATE_FALLBACK:
-            if (_ap_fallback_enabled) createAP();
+            if (!_ap_connected & _ap_fallback_enabled) _doAP();
             _timeout = millis();
             _state = STATE_IDLE;
             break;
