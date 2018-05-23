@@ -42,6 +42,7 @@ void _jw_wps_status_cb(wps_cb_status status) {
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
+    WiFi.mode(WIFI_OFF);
     snprintf_P(_hostname, sizeof(_hostname), PSTR("ESP_%06X"), ESP.getChipId());
 }
 
@@ -207,12 +208,7 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
         if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
             WiFi.mode(WIFI_OFF);
         }
-
-        if (connectable()) {
-            WiFi.mode(WIFI_AP_STA);
-        } else {
-            WiFi.mode(WIFI_STA);
-        }
+        WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
 
         // Configure static options
         if (!entry.dhcp) {
@@ -284,11 +280,7 @@ bool JustWifi::_doAP() {
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATING);
 
-    if (WiFi.status() == WL_CONNECTED) {
-        WiFi.mode(WIFI_AP_STA);
-    } else {
-        WiFi.mode(WIFI_AP);
-    }
+    WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_AP));
 
     // Configure static options
     if (_softap.dhcp) {
@@ -316,11 +308,7 @@ uint8_t JustWifi::_doScan() {
     if (false == scanning) {
         WiFi.enableSTA(true);
         WiFi.disconnect();
-        if (connectable()) {
-            WiFi.mode(WIFI_AP_STA);
-        } else {
-            WiFi.mode(WIFI_STA);
-        }
+        WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
         WiFi.scanNetworks(true, true);
         _doCallback(MESSAGE_SCANNING);
         scanning = true;
@@ -486,7 +474,7 @@ void JustWifi::_machine() {
             if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
                 WiFi.mode(WIFI_OFF);
             }
-            WiFi.mode(WIFI_STA);
+            WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
 
             if (!WiFi.enableSTA(true)) {
                 _state = STATE_WPS_FAILED;
@@ -744,6 +732,7 @@ bool JustWifi::connectable() {
 void JustWifi::disconnect() {
     _timeout = 0;
     WiFi.disconnect();
+    WiFi.mode((WiFiMode_t) (WiFi.getMode() & ~WIFI_STA));
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
@@ -776,6 +765,7 @@ void JustWifi::startWPS() {
 
 void JustWifi::destroyAP() {
     WiFi.softAPdisconnect();
+    WiFi.mode((WiFiMode_t) (WiFi.getMode() & ~WIFI_AP));
     _ap_connected = false;
     _doCallback(MESSAGE_ACCESSPOINT_DESTROYED);
 }
