@@ -200,7 +200,7 @@ void setup() {
     Serial.println("[WIFI] Connecting Wifi...");
 
     // Manually raise an access point
-    //jw.createAP();
+    //jw.enableAP(true);
 
     // Start WPS join
     //jw.startWPS();

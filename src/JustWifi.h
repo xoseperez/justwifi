@@ -145,19 +145,16 @@ class JustWifi {
         wl_status_t getStatus();
         String getAPSSID();
 
-        void disconnect();
         bool connected();
-
-        void startWPS();
-
-        bool createAP();
-        void destroyAP();
         bool connectable();
 
         void turnOff();
         void turnOn();
+        void disconnect();
         void enableSTA(bool enabled);
+        void enableAP(bool enabled);
         void enableAPFallback(bool enabled);
+        void startWPS();
 
         void loop();
 

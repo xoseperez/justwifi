@@ -42,7 +42,8 @@ void _jw_wps_status_cb(wps_cb_status status) {
 JustWifi::JustWifi() {
     _softap.ssid = NULL;
     _timeout = 0;
-    WiFi.mode(WIFI_OFF);
+    WiFi.enableAP(false);
+    WiFi.enableSTA(false);
     snprintf_P(_hostname, sizeof(_hostname), PSTR("ESP_%06X"), ESP.getChipId());
 }
 
@@ -206,9 +207,15 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 
         // See https://github.com/esp8266/Arduino/issues/2186
         if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
-            WiFi.mode(WIFI_OFF);
+            if ((WiFi.getMode() & WIFI_AP) > 0) {
+                WiFi.mode(WIFI_OFF);
+                delay(10);
+                WiFi.enableAP(true);
+            } else {
+                WiFi.mode(WIFI_OFF);
+            }
         }
-        WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
+        WiFi.enableSTA(true);
 
         // Configure static options
         if (!entry.dhcp) {
@@ -258,6 +265,7 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 
     // Check timeout
     if (millis() - timeout > _connect_timeout) {
+        WiFi.enableSTA(false);
         _doCallback(MESSAGE_CONNECT_FAILED, entry.ssid);
         return (state = RESPONSE_FAIL);
     }
@@ -271,7 +279,7 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 bool JustWifi::_doAP() {
 
     // If already created recreate
-    if (_ap_connected) destroyAP();
+    if (_ap_connected) enableAP(false);
 
     // Check if Soft AP configuration defined
     if (!_softap.ssid) {
@@ -280,7 +288,7 @@ bool JustWifi::_doAP() {
 
     _doCallback(MESSAGE_ACCESSPOINT_CREATING);
 
-    WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_AP));
+    WiFi.enableAP(true);
 
     // Configure static options
     if (_softap.dhcp) {
@@ -306,9 +314,8 @@ uint8_t JustWifi::_doScan() {
 
     // If not scanning, start scan
     if (false == scanning) {
-        WiFi.enableSTA(true);
         WiFi.disconnect();
-        WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
+        WiFi.enableSTA(true);
         WiFi.scanNetworks(true, true);
         _doCallback(MESSAGE_SCANNING);
         scanning = true;
@@ -376,7 +383,7 @@ void JustWifi::_machine() {
         static unsigned char previous = 0xFF;
         if (_state != previous) {
             previous = _state;
-            Serial.printf("New state: %u\n", _state);
+            Serial.printf("_state: %u, WiFi.getMode(): %u\n", _state, WiFi.getMode());
         }
     #endif
 
@@ -472,9 +479,15 @@ void JustWifi::_machine() {
 
             // See https://github.com/esp8266/Arduino/issues/2186
             if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
-                WiFi.mode(WIFI_OFF);
+                if ((WiFi.getMode() & WIFI_AP) > 0) {
+                    WiFi.mode(WIFI_OFF);
+                    delay(10);
+                    WiFi.enableAP(true);
+                } else {
+                    WiFi.mode(WIFI_OFF);
+                }
+
             }
-            WiFi.mode((WiFiMode_t) (WiFi.getMode() | WIFI_STA));
 
             if (!WiFi.enableSTA(true)) {
                 _state = STATE_WPS_FAILED;
@@ -732,46 +745,48 @@ bool JustWifi::connectable() {
 void JustWifi::disconnect() {
     _timeout = 0;
     WiFi.disconnect();
-    WiFi.mode((WiFiMode_t) (WiFi.getMode() & ~WIFI_STA));
+    WiFi.enableSTA(false);
     _doCallback(MESSAGE_DISCONNECTED);
 }
 
 void JustWifi::turnOff() {
-	WiFi.disconnect();
-	WiFi.mode(WIFI_OFF);
-	WiFi.forceSleepBegin();
-	delay(1);
+    WiFi.disconnect();
+    WiFi.enableAP(false);
+    WiFi.enableSTA(false);
+    WiFi.forceSleepBegin();
+    delay(1);
     _doCallback(MESSAGE_TURNING_OFF);
     _sta_enabled = false;
+    _state = STATE_IDLE;
 }
 
 void JustWifi::turnOn() {
-	WiFi.forceSleepWake();
-	delay(1);
-	WiFi.mode(WIFI_STA);
-	setReconnectTimeout(0);
-	_doCallback(MESSAGE_TURNING_ON);
-    _state = STATE_IDLE;
+    WiFi.forceSleepWake();
+    delay(1);
+    setReconnectTimeout(0);
+    _doCallback(MESSAGE_TURNING_ON);
+    WiFi.enableSTA(true);
     _sta_enabled = true;
-}
-
-bool JustWifi::createAP() {
-    return _doAP();
+    _state = STATE_IDLE;
 }
 
 void JustWifi::startWPS() {
     _state = STATE_WPS_START;
 }
 
-void JustWifi::destroyAP() {
-    WiFi.softAPdisconnect();
-    WiFi.mode((WiFiMode_t) (WiFi.getMode() & ~WIFI_AP));
-    _ap_connected = false;
-    _doCallback(MESSAGE_ACCESSPOINT_DESTROYED);
-}
-
 void JustWifi::enableSTA(bool enabled) {
     _sta_enabled = enabled;
+}
+
+void JustWifi::enableAP(bool enabled) {
+    if (enabled) {
+        _doAP();
+    } else {
+        WiFi.softAPdisconnect();
+        WiFi.enableAP(false);
+        _ap_connected = false;
+        _doCallback(MESSAGE_ACCESSPOINT_DESTROYED);
+    }
 }
 
 void JustWifi::enableAPFallback(bool enabled) {
