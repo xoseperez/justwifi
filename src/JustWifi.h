@@ -154,7 +154,10 @@ class JustWifi {
         void enableSTA(bool enabled);
         void enableAP(bool enabled);
         void enableAPFallback(bool enabled);
-        void startWPS();
+
+        #if !defined(JUSTWIFI_DISABLE_WPS)
+            void startWPS();
+        #endif
 
         void loop();
 
