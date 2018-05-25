@@ -216,6 +216,7 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
             }
         }
         WiFi.enableSTA(true);
+        WiFi.hostname(_hostname);
 
         // Configure static options
         if (!entry.dhcp) {
@@ -715,7 +716,6 @@ void JustWifi::resetReconnectTimeout() {
 
 void JustWifi::setHostname(const char * hostname) {
     strncpy(_hostname, hostname, sizeof(_hostname));
-    WiFi.hostname(_hostname);
 }
 
 void JustWifi::subscribe(TMessageFunction fn) {
