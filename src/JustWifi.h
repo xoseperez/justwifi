@@ -32,8 +32,9 @@ extern "C" {
   #include "user_interface.h"
 }
 
-#define DEFAULT_CONNECT_TIMEOUT     10000
-#define DEFAULT_RECONNECT_INTERVAL  60000
+#define DEFAULT_CONNECT_TIMEOUT         10000
+#define DEFAULT_RECONNECT_INTERVAL      60000
+#define JUSTWIFI_SMARTCONFIG_TIMEOUT    60000
 
 #ifdef DEBUG_ESP_WIFI
 #ifdef DEBUG_ESP_PORT
@@ -73,6 +74,10 @@ typedef enum {
     STATE_WPS_ONGOING,
     STATE_WPS_FAILED,
     STATE_WPS_SUCCESS,
+    STATE_SMARTCONFIG_START,
+    STATE_SMARTCONFIG_ONGOING,
+    STATE_SMARTCONFIG_FAILED,
+    STATE_SMARTCONFIG_SUCCESS,
     STATE_FALLBACK
 } justwifi_states_t;
 
@@ -97,8 +102,9 @@ typedef enum {
     MESSAGE_WPS_START,
     MESSAGE_WPS_SUCCESS,
     MESSAGE_WPS_ERROR,
-    MESSAGE_STATION_CONNECTED,
-    MESSAGE_STATION_DISCONNECTED
+    MESSAGE_SMARTCONFIG_START,
+    MESSAGE_SMARTCONFIG_SUCCESS,
+    MESSAGE_SMARTCONFIG_ERROR
 } justwifi_messages_t;
 
 enum {
@@ -118,6 +124,7 @@ class JustWifi {
         typedef std::function<void(justwifi_messages_t, char *)> TMessageFunction;
 
         void cleanNetworks();
+        bool addCurrentNetwork(bool front = false);
         bool addNetwork(
             const char * ssid,
             const char * pass = NULL,
@@ -158,6 +165,7 @@ class JustWifi {
         #if !defined(JUSTWIFI_DISABLE_WPS)
             void startWPS();
         #endif
+        void startSmartConfig();
 
         void loop();
 
@@ -169,6 +177,7 @@ class JustWifi {
         unsigned long _connect_timeout = DEFAULT_CONNECT_TIMEOUT;
         unsigned long _reconnect_timeout = DEFAULT_RECONNECT_INTERVAL;
         unsigned long _timeout = 0;
+        unsigned long _start = 0;
         uint8_t _currentID;
         bool _scan = false;
         char _hostname[32];
@@ -183,6 +192,7 @@ class JustWifi {
         uint8_t _doScan();
         uint8_t _doSTA(uint8_t id = 0xFF);
 
+        void _disable();
         void _machine();
         uint8_t _populate(uint8_t networkCount);
         uint8_t _sortByRSSI();

@@ -5,32 +5,6 @@
 
 #include <JustWifi.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <DNSServer.h>
-
-DNSServer dnsServer;
-#define DNS_PORT 53
-
-void mDNSCallback(justwifi_messages_t code, char * parameter) {
-
-    if (code == MESSAGE_CONNECTED) {
-
-        // Configure mDNS
-        if (MDNS.begin((char *) WiFi.hostname().c_str())) {
-            Serial.printf("[MDNS] OK\n");
-        } else {
-            Serial.printf("[MDNS] FAIL\n");
-        }
-
-    }
-
-}
-
-void CaptivePortalCallback(justwifi_messages_t code, char * parameter) {
-    if (code == MESSAGE_ACCESSPOINT_CREATED) {
-        dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-    }
-}
 
 void infoWifi() {
 
@@ -176,45 +150,14 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
 
-    // Set WIFI hostname (otherwise it would be ESP_XXXXXX)
-    //jw.setHostname("JUSTWIFI");
-
-    // Enable STA mode (connecting to a router)
-    jw.enableSTA(true);
-
-    // Configure it to scan available networks and connect in order of dBm
-    jw.scanNetworks(true);
-
-    // Clean existing network configuration
-    jw.cleanNetworks();
-
-    // Add a network with password
-    jw.addNetwork("home", "password");
-
-    // Add a network with static IP
-    jw.addNetwork("moms", "anotherpassword", "192.168.1.201", "192.168.1.1", "255.255.255.0");
-
-    // Add an open network
-    jw.addNetwork("work");
-
-    // Create Access Point if STA fails
-    jw.enableAPFallback(true);
-
-    // Set open access point, do not define to use the hostname
-    //jw.setSoftAP("JUSTWIFI");
-
-    // Set password protected access point
-    //jw.setSoftAP("JUSTWIFI", "PASSWORD");
+    Serial.println("[WIFI] JustWifi Smart Config (ESP TOUCH) example");
+    Serial.println("[WIFI] Start the ESP8266 SmartConfig APP...");
 
     // Callbacks
     jw.subscribe(infoCallback);
-    jw.subscribe(mDNSCallback);
-    jw.subscribe(CaptivePortalCallback);
 
-    Serial.println("[WIFI] Connecting Wifi...");
-
-    // Manually raise an access point
-    //jw.enableAP(true);
+    // Start WPS join
+    jw.startSmartConfig();
 
 }
 

@@ -60,6 +60,21 @@ JustWifi::~JustWifi() {
 // PRIVATE METHODS
 //------------------------------------------------------------------------------
 
+void JustWifi::_disable() {
+
+    // See https://github.com/esp8266/Arduino/issues/2186
+    if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
+        if ((WiFi.getMode() & WIFI_AP) > 0) {
+            WiFi.mode(WIFI_OFF);
+            delay(10);
+            WiFi.enableAP(true);
+        } else {
+            WiFi.mode(WIFI_OFF);
+        }
+
+    }
+
+}
 uint8_t JustWifi::_sortByRSSI() {
 
     bool first = true;
@@ -209,17 +224,7 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
     if (RESPONSE_START == state) {
 
         WiFi.persistent(false);
-
-        // See https://github.com/esp8266/Arduino/issues/2186
-        if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
-            if ((WiFi.getMode() & WIFI_AP) > 0) {
-                WiFi.mode(WIFI_OFF);
-                delay(10);
-                WiFi.enableAP(true);
-            } else {
-                WiFi.mode(WIFI_OFF);
-            }
-        }
+        _disable();
         WiFi.enableSTA(true);
         WiFi.hostname(_hostname);
 
@@ -485,17 +490,7 @@ void JustWifi::_machine() {
 
             _doCallback(MESSAGE_WPS_START);
 
-            // See https://github.com/esp8266/Arduino/issues/2186
-            if (strncmp_P(ESP.getSdkVersion(), PSTR("1.5.3"), 5) == 0) {
-                if ((WiFi.getMode() & WIFI_AP) > 0) {
-                    WiFi.mode(WIFI_OFF);
-                    delay(10);
-                    WiFi.enableAP(true);
-                } else {
-                    WiFi.mode(WIFI_OFF);
-                }
-
-            }
+            _disable();
 
             if (!WiFi.enableSTA(true)) {
                 _state = STATE_WPS_FAILED;
@@ -548,16 +543,49 @@ void JustWifi::_machine() {
         case STATE_WPS_SUCCESS:
             _doCallback(MESSAGE_WPS_SUCCESS);
             wifi_wps_disable();
-            addNetwork(
-                WiFi.SSID().c_str(),
-                WiFi.psk().c_str(),
-                NULL, NULL, NULL, NULL,
-                true
-            );
+            addCurrentNetwork(true);
             _state = STATE_IDLE;
             break;
 
         #endif // !defined(JUSTWIFI_DISABLE_WPS)
+
+        // ---------------------------------------------------------------------
+
+        case STATE_SMARTCONFIG_START:
+
+            _doCallback(MESSAGE_SMARTCONFIG_START);
+
+            _disable();
+
+            if (!WiFi.beginSmartConfig()) {
+                _state = STATE_SMARTCONFIG_FAILED;
+                return;
+            }
+
+            _state = STATE_SMARTCONFIG_ONGOING;
+            _start = millis();
+
+            break;
+
+        case STATE_SMARTCONFIG_ONGOING:
+            if (WiFi.smartConfigDone()) {
+                _state = STATE_SMARTCONFIG_SUCCESS;
+            } else if (millis() - _start > JUSTWIFI_SMARTCONFIG_TIMEOUT) {
+                _state = STATE_SMARTCONFIG_FAILED;
+            }
+            break;
+
+        case STATE_SMARTCONFIG_FAILED:
+            _doCallback(MESSAGE_SMARTCONFIG_ERROR);
+            WiFi.stopSmartConfig();
+            _state = STATE_IDLE;
+            break;
+
+        case STATE_SMARTCONFIG_SUCCESS:
+            _doCallback(MESSAGE_SMARTCONFIG_SUCCESS);
+            addCurrentNetwork(true);
+            _state = STATE_IDLE;
+            break;
 
         // ---------------------------------------------------------------------
 
@@ -655,6 +683,15 @@ bool JustWifi::addNetwork(
     }
     return true;
 
+}
+
+bool JustWifi::addCurrentNetwork(bool front) {
+    return addNetwork(
+        WiFi.SSID().c_str(),
+        WiFi.psk().c_str(),
+        NULL, NULL, NULL, NULL,
+        front
+    );
 }
 
 bool JustWifi::setSoftAP(
@@ -784,6 +821,10 @@ void JustWifi::startWPS() {
     _state = STATE_WPS_START;
 }
 #endif // !defined(JUSTWIFI_DISABLE_WPS)
+
+void JustWifi::startSmartConfig() {
+    _state = STATE_SMARTCONFIG_START;
+}
 
 void JustWifi::enableSTA(bool enabled) {
     _sta_enabled = enabled;
