@@ -537,7 +537,7 @@ void JustWifi::_machine() {
         case STATE_WPS_FAILED:
             _doCallback(MESSAGE_WPS_ERROR);
             wifi_wps_disable();
-            _state = STATE_IDLE;
+            _state = STATE_FALLBACK;
             break;
 
         case STATE_WPS_SUCCESS:
@@ -555,7 +555,7 @@ void JustWifi::_machine() {
 
             _doCallback(MESSAGE_SMARTCONFIG_START);
 
-            _disable();
+            enableAP(false);
 
             if (!WiFi.beginSmartConfig()) {
                 _state = STATE_SMARTCONFIG_FAILED;
@@ -578,7 +578,8 @@ void JustWifi::_machine() {
         case STATE_SMARTCONFIG_FAILED:
             _doCallback(MESSAGE_SMARTCONFIG_ERROR);
             WiFi.stopSmartConfig();
-            _state = STATE_IDLE;
+            WiFi.enableSTA(false);
+            _state = STATE_FALLBACK;
             break;
 
         case STATE_SMARTCONFIG_SUCCESS:
