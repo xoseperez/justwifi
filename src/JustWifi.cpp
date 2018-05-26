@@ -742,11 +742,15 @@ bool JustWifi::setSoftAP(
         _softap.netmask.fromString(netmask);
     }
 
+    if ((WiFi.getMode() & WIFI_AP) > 0) {
+
     // https://github.com/xoseperez/justwifi/issues/4
     if (_softap.pass) {
         WiFi.softAP(_softap.ssid, _softap.pass);
     } else {
         WiFi.softAP(_softap.ssid);
+        }
+        
     }
 
     return true;
