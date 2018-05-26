@@ -162,10 +162,13 @@ class JustWifi {
         void enableAP(bool enabled);
         void enableAPFallback(bool enabled);
 
-        #if !defined(JUSTWIFI_DISABLE_WPS)
+        #if defined(JUSTWIFI_ENABLE_WPS)
             void startWPS();
         #endif
-        void startSmartConfig();
+
+        #if defined(JUSTWIFI_ENABLE_SMARTCONFIG)
+            void startSmartConfig();
+        #endif
 
         void loop();
 

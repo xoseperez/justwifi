@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // WPS callbacks
 // -----------------------------------------------------------------------------
 
-#if !defined(JUSTWIFI_DISABLE_WPS)
+#if defined(JUSTWIFI_ENABLE_WPS)
 
 #include "user_interface.h"
 
@@ -38,7 +38,7 @@ void _jw_wps_status_cb(wps_cb_status status) {
     _jw_wps_status = status;
 }
 
-#endif // !defined(JUSTWIFI_DISABLE_WPS)
+#endif // defined(JUSTWIFI_ENABLE_WPS)
 
 //------------------------------------------------------------------------------
 // CONSTRUCTOR
@@ -484,7 +484,7 @@ void JustWifi::_machine() {
 
         // ---------------------------------------------------------------------
 
-        #if !defined(JUSTWIFI_DISABLE_WPS)
+        #if defined(JUSTWIFI_ENABLE_WPS)
 
         case STATE_WPS_START:
 
@@ -547,9 +547,11 @@ void JustWifi::_machine() {
             _state = STATE_IDLE;
             break;
 
-        #endif // !defined(JUSTWIFI_DISABLE_WPS)
+        #endif // defined(JUSTWIFI_ENABLE_WPS)
 
         // ---------------------------------------------------------------------
+
+        #if defined(JUSTWIFI_ENABLE_SMARTCONFIG)
 
         case STATE_SMARTCONFIG_START:
 
@@ -587,6 +589,8 @@ void JustWifi::_machine() {
             addCurrentNetwork(true);
             _state = STATE_IDLE;
             break;
+
+        #endif // defined(JUSTWIFI_ENABLE_SMARTCONFIG)
 
         // ---------------------------------------------------------------------
 
@@ -817,15 +821,17 @@ void JustWifi::turnOn() {
     _state = STATE_IDLE;
 }
 
-#if !defined(JUSTWIFI_DISABLE_WPS)
+#if defined(JUSTWIFI_ENABLE_WPS)
 void JustWifi::startWPS() {
     _state = STATE_WPS_START;
 }
-#endif // !defined(JUSTWIFI_DISABLE_WPS)
+#endif // defined(JUSTWIFI_ENABLE_WPS)
 
+#if defined(JUSTWIFI_ENABLE_SMARTCONFIG)
 void JustWifi::startSmartConfig() {
     _state = STATE_SMARTCONFIG_START;
 }
+#endif // defined(JUSTWIFI_ENABLE_SMARTCONFIG)
 
 void JustWifi::enableSTA(bool enabled) {
     _sta_enabled = enabled;
