@@ -1,14 +1,8 @@
 /*
 
-JustWifi - Smart Config example
+JustWifi - Access Point Example
 
-This example shows how to use Smart Config (a.k.a. ESP Touch) to
-provide the connection credentials to a device using a mobile app.
-
-Compatible apps:
-
-* ESP8266 SmartConfig
-* IoT SmartConfig
+This example creates an access point.
 
 Copyright (C) 2016-2018 by Xose Pérez <xose dot perez at gmail dot com>
 
@@ -27,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-
 #include <JustWifi.h>
 
 void setup() {
@@ -36,8 +29,6 @@ void setup() {
     delay(2000);
     Serial.println();
     Serial.println();
-
-    Serial.setDebugOutput(true);
 
     // -------------------------------------------------------------------------
 
@@ -52,13 +43,14 @@ void setup() {
 
     // -------------------------------------------------------------------------
 
-    Serial.println("[WIFI] JustWifi Smart Config (ESP TOUCH) example");
-    Serial.println("[WIFI] Start your Smart Config APP...");
+    // Set open access point, do not define to use the hostname
+    //jw.setSoftAP("justwifi");
 
-    // Start smart config join
-    jw.startSmartConfig();
+    // Set password protected access point
+    jw.setSoftAP("justwifi", "password");
 
-    WiFi.printDiag(Serial);
+    // Enable AP
+    jw.enableAP(true);
 
 }
 

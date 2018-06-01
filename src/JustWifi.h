@@ -26,13 +26,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <vector>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
-
 extern "C" {
-  #include "user_interface.h"
+    #include "user_interface.h"
 }
+#else
+#error "Non supported architecture!"
+#endif
 
-#define DEFAULT_CONNECT_TIMEOUT         10000
+
+#define DEFAULT_CONNECT_TIMEOUT         20000
 #define DEFAULT_RECONNECT_INTERVAL      60000
 #define JUSTWIFI_SMARTCONFIG_TIMEOUT    60000
 
@@ -118,10 +124,10 @@ class JustWifi {
 
     public:
 
+        typedef std::function<void(justwifi_messages_t, char *)> TMessageFunction;
+
         JustWifi();
         ~JustWifi();
-
-        typedef std::function<void(justwifi_messages_t, char *)> TMessageFunction;
 
         void cleanNetworks();
         bool addCurrentNetwork(bool front = false);
@@ -142,22 +148,19 @@ class JustWifi {
             const char * netmask = NULL
         );
 
-        void scanNetworks(bool scan);
         void setHostname(const char * hostname);
         void setConnectTimeout(unsigned long ms);
         void setReconnectTimeout(unsigned long ms = DEFAULT_RECONNECT_INTERVAL);
         void resetReconnectTimeout();
         void subscribe(TMessageFunction fn);
 
-        wl_status_t getStatus();
         String getAPSSID();
-
-        bool connected();
         bool connectable();
 
         void turnOff();
         void turnOn();
         void disconnect();
+        void enableScan(bool scan);
         void enableSTA(bool enabled);
         void enableAP(bool enabled);
         void enableAPFallback(bool enabled);
@@ -170,6 +173,7 @@ class JustWifi {
             void startSmartConfig();
         #endif
 
+        void init();
         void loop();
 
     private:
@@ -195,7 +199,7 @@ class JustWifi {
         uint8_t _doScan();
         uint8_t _doSTA(uint8_t id = 0xFF);
 
-        void _disable();
+        void _esp8266_153_reset();
         void _machine();
         uint8_t _populate(uint8_t networkCount);
         uint8_t _sortByRSSI();

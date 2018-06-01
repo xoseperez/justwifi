@@ -1,8 +1,9 @@
 /*
 
-JustWifi - Basic example
+JustWifi - Advanced example
 
-This example shows how to define different networks and enable network scanning
+This example shows how to use callbacks to enable other services like mDNS or
+a captive portal (when in AP mode only)
 
 Copyright (C) 2016-2018 by Xose Pérez <xose dot perez at gmail dot com>
 
@@ -23,6 +24,63 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <JustWifi.h>
 
+// -----------------------------------------------------------------------------
+// mDNS
+// -----------------------------------------------------------------------------
+
+#if defined(ARDUINO_ARCH_ESP32)
+    #include <ESPmDNS.h>
+#else
+    #include <ESP8266mDNS.h>
+#endif
+
+void mdnsCallback(justwifi_messages_t code, char * parameter) {
+
+    if (code == MESSAGE_CONNECTED) {
+
+        #if defined(ARDUINO_ARCH_ESP32)
+            String hostname = String(WiFi.getHostname());
+        #else
+            String hostname = WiFi.hostname();
+        #endif
+
+        // Configure mDNS
+        if (MDNS.begin((char *) hostname.c_str())) {
+            Serial.printf("[MDNS] OK\n");
+
+            // Publish as if there is an TELNET service available
+            MDNS.addService("telnet", "tcp", 22);
+
+        } else {
+            Serial.printf("[MDNS] FAIL\n");
+        }
+
+    }
+
+}
+
+// -----------------------------------------------------------------------------
+// Captive portal
+// -----------------------------------------------------------------------------
+
+#include <DNSServer.h>
+
+DNSServer dnsServer;
+
+void captivePortalCallback(justwifi_messages_t code, char * parameter) {
+
+    if (code == MESSAGE_ACCESSPOINT_CREATED) {
+        if (!WiFi.isConnected()) dnsServer.start(53, "*", WiFi.softAPIP());
+    }
+
+    if (code == MESSAGE_CONNECTED) {
+        dnsServer.stop();
+    }
+
+}
+
+// -----------------------------------------------------------------------------
+
 void setup() {
 
     Serial.begin(115200);
@@ -40,6 +98,8 @@ void setup() {
 
     // Callbacks
     jw.subscribe(infoCallback);
+    jw.subscribe(mdnsCallback);
+    jw.subscribe(captivePortalCallback);
 
     // -------------------------------------------------------------------------
 
