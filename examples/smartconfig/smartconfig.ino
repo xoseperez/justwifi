@@ -36,8 +36,6 @@ void setup() {
     Serial.println();
     Serial.println();
 
-    Serial.setDebugOutput(true);
-
     // -------------------------------------------------------------------------
 
     // Set WIFI hostname (otherwise it would be ESP-XXXXXX)
@@ -53,8 +51,6 @@ void setup() {
 
     // Start Smartconfig join
     jw.startSmartConfig();
-
-    WiFi.printDiag(Serial);
 
 }
 

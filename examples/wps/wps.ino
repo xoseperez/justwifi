@@ -1,6 +1,6 @@
 /*
 
-JustWifi - Smart Config example
+JustWifi - WPS example
 
 This example shows how to use connect to a WiFi using WPS.
 
