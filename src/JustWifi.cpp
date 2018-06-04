@@ -56,6 +56,8 @@ JustWifi::~JustWifi() {
 
 #if defined(JUSTWIFI_ENABLE_WPS)
 
+#if defined(ARDUINO_ARCH_ESP8266)
+
 #include "user_interface.h"
 
 wps_cb_status _jw_wps_status;
@@ -63,6 +65,15 @@ wps_cb_status _jw_wps_status;
 void _jw_wps_status_cb(wps_cb_status status) {
     _jw_wps_status = status;
 }
+
+
+#else
+
+#include "esp_wps.h"
+
+esp_wps_config_t _wifi_wps_config = WPS_CONFIG_INIT_DEFAULT(ESP_WPS_MODE);
+
+#endif
 
 void JustWifi::startWPS() {
     _state = STATE_WPS_START;
@@ -560,36 +571,45 @@ void JustWifi::_machine() {
 
             _doCallback(MESSAGE_WPS_START);
 
-            _esp8266_153_reset();
+            #if defined(ARDUINO_ARCH_ESP8266)
 
-            if (!WiFi.enableSTA(true)) {
-                _state = STATE_WPS_FAILED;
-                return;
-            }
+                _esp8266_153_reset();
 
-            WiFi.disconnect();
+                if (!WiFi.enableSTA(true)) {
+                    _state = STATE_WPS_FAILED;
+                    return;
+                }
 
-            if (!wifi_wps_disable()) {
-                _state = STATE_WPS_FAILED;
-                return;
-            }
+                WiFi.disconnect();
 
-            // so far only WPS_TYPE_PBC is supported (SDK 1.2.0)
-            if (!wifi_wps_enable(WPS_TYPE_PBC)) {
-                _state = STATE_WPS_FAILED;
-                return;
-            }
+                if (!wifi_wps_disable()) {
+                    _state = STATE_WPS_FAILED;
+                    return;
+                }
 
-            _jw_wps_status = (wps_cb_status) 5;
-            if (!wifi_set_wps_cb((wps_st_cb_t) &_jw_wps_status_cb)) {
-                _state = STATE_WPS_FAILED;
-                return;
-            }
+                // so far only WPS_TYPE_PBC is supported (SDK 1.2.0)
+                if (!wifi_wps_enable(WPS_TYPE_PBC)) {
+                    _state = STATE_WPS_FAILED;
+                    return;
+                }
 
-            if (!wifi_wps_start()) {
-                _state = STATE_WPS_FAILED;
-                return;
-            }
+                _jw_wps_status = (wps_cb_status) 5;
+                if (!wifi_set_wps_cb((wps_st_cb_t) &_jw_wps_status_cb)) {
+                    _state = STATE_WPS_FAILED;
+                    return;
+                }
+
+                if (!wifi_wps_start()) {
+                    _state = STATE_WPS_FAILED;
+                    return;
+                }
+
+            #else
+
+                esp_wifi_wps_enable(&_wifi_wps_config);
+                esp_wifi_wps_start(0);
+
+            #endif
 
             _state = STATE_WPS_ONGOING;
             break;
@@ -911,9 +931,15 @@ void JustWifi::enableScan(bool scan) {
     _scan = scan;
 }
 
+void JustWifi::_events(WiFiEvent_t event) {
+    Serial.printf("[WIFI] Event %u\n", (uint8_t) event);
+    Serial.println(event);
+}
+
 void JustWifi::init() {
     WiFi.enableAP(false);
     WiFi.enableSTA(false);
+    //WiFi.onEvent(reinterpret_cast<WiFiEventCb>(&JustWifi::_events), WIFI_EVENT_ANY);
 }
 
 void JustWifi::loop() {

@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-
 #include <JustWifi.h>
 
 void setup() {
@@ -55,7 +54,7 @@ void setup() {
     Serial.println("[WIFI] JustWifi Smart Config (ESP TOUCH) example");
     Serial.println("[WIFI] Start your Smart Config APP...");
 
-    // Start smart config join
+    // Start Smartconfig join
     jw.startSmartConfig();
 
     WiFi.printDiag(Serial);

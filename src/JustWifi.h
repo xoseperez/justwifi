@@ -176,6 +176,8 @@ class JustWifi {
         void init();
         void loop();
 
+        void _events(WiFiEvent_t event);
+
     private:
 
         std::vector<network_t> _network_list;
