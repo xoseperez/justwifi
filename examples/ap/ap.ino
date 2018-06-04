@@ -1,8 +1,8 @@
 /*
 
-JustWifi - Basic example
+JustWifi - Access Point Example
 
-This example shows how to define different networks and enable network scanning
+This example creates an access point.
 
 Copyright (C) 2016-2018 by Xose Pérez <xose dot perez at gmail dot com>
 
@@ -40,33 +40,14 @@ void setup() {
 
     // -------------------------------------------------------------------------
 
-    // AP mode only as fallback
-    jw.enableAP(false);
-    jw.enableAPFallback(true);
+    // Set open access point, do not define to use the hostname
+    //jw.setSoftAP("justwifi");
 
-    // -------------------------------------------------------------------------
+    // Set password protected access point
+    jw.setSoftAP("justwifi", "password");
 
-    // Enable STA mode (connecting to a router)
-    jw.enableSTA(true);
-
-    // Configure it to scan available networks and connect in order of dBm
-    jw.enableScan(true);
-
-    // Clean existing network configuration
-    jw.cleanNetworks();
-
-    // Add a network with password
-    jw.addNetwork("home", "password");
-
-    // Add a network with static IP
-    jw.addNetwork("moms", "anotherpassword", "192.168.1.201", "192.168.1.1", "255.255.255.0");
-
-    // Add an open network
-    jw.addNetwork("work");
-
-    // -------------------------------------------------------------------------
-
-    Serial.println("[WIFI] Connecting Wifi...");
+    // Enable AP
+    jw.enableAP(true);
 
 }
 

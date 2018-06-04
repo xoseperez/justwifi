@@ -142,7 +142,6 @@ class JustWifi {
             const char * netmask = NULL
         );
 
-        void scanNetworks(bool scan);
         void setHostname(const char * hostname);
         void setConnectTimeout(unsigned long ms);
         void setReconnectTimeout(unsigned long ms = DEFAULT_RECONNECT_INTERVAL);
@@ -158,6 +157,7 @@ class JustWifi {
         void turnOff();
         void turnOn();
         void disconnect();
+        void enableScan(bool scan);
         void enableSTA(bool enabled);
         void enableAP(bool enabled);
         void enableAPFallback(bool enabled);

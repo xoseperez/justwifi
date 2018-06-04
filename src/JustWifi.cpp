@@ -750,7 +750,7 @@ bool JustWifi::setSoftAP(
     } else {
         WiFi.softAP(_softap.ssid);
         }
-        
+
     }
 
     return true;
@@ -857,7 +857,7 @@ void JustWifi::enableAPFallback(bool enabled) {
 }
 
 
-void JustWifi::scanNetworks(bool scan) {
+void JustWifi::enableScan(bool scan) {
     _scan = scan;
 }
 
