@@ -7,7 +7,9 @@ cache:
         - "~/.platformio"
 install:
     - pip install -U platformio
-before_script:
-    - cd examples/basic
 script:
-    - pio run
+    - pushd examples/advanced && pio run && popd
+    - pushd examples/ap && pio run && popd
+    - pushd examples/basic && pio run && popd
+    - pushd examples/smartconfig && pio run && popd
+    - pushd examples/wps && pio run && popd
