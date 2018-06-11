@@ -8,8 +8,8 @@ cache:
 install:
     - pip install -U platformio
 script:
-    - cd examples/advanced && pio run
-    - cd examples/ap && pio run
-    - cd examples/basic && pio run
-    - cd examples/smartconfig && pio run
-    - cd examples/wps && pio run
+    - pushd examples/advanced && pio run && popd
+    - pushd examples/ap && pio run && popd
+    - pushd examples/basic && pio run && popd
+    - pushd examples/smartconfig && pio run && popd
+    - pushd examples/wps && pio run && popd
