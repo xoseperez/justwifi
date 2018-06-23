@@ -1,7 +1,7 @@
 {
     "name": "JustWifi",
-    "keywords": "wifi,manager,scan",
-    "description": "Wifi Manager for ESP8266 that supports multiple wifi networks and scan for strongest signal",
+    "keywords": "wifi,manager,scan,wps,smartconfig",
+    "description": "Wifi Manager for ESP8266, supports multiple wifi networks, scan for strongest signal, WPS and SmartConfig",
     "repository": {
         "type": "git",
         "url": "https://github.com/xoseperez/justwifi.git"
