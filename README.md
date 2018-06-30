@@ -2,9 +2,9 @@
 
 JustWifi is a WIFI Manager library for the [Arduino Core for ESP8266][2]. The goal of the library is to manage ONLY the WIFI connection (no webserver, no mDNS,...) from code and in a reliable and flexible way.
 
-[![version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](CHANGELOG.md)
-[![travis](https://travis-ci.org/xoseperez/justwifi.svg?branch=master)](https://travis-ci.org/xoseperez/justwifi)
-[![codacy](https://img.shields.io/codacy/grade/4ccbea0317c4415eb2d1c562feced407/master.svg)](https://www.codacy.com/app/xoseperez/justwifi/dashboard)
+[![version](https://img.shields.io/badge/version-2.0.1-brightgreen.svg)](CHANGELOG.md)
+[![travis](https://travis-ci.org/xoseperez/justwifi.svg?branch=dev)](https://travis-ci.org/xoseperez/justwifi)
+[![codacy](https://img.shields.io/codacy/grade/4ccbea0317c4415eb2d1c562feced407/dev.svg)](https://www.codacy.com/app/xoseperez/justwifi/dashboard)
 [![license](https://img.shields.io/github/license/xoseperez/justwifi.svg)](LICENSE)
 <br />
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=xose%2eperez%40gmail%2ecom&lc=US&no_note=0&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHostedGuest)

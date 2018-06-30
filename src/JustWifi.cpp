@@ -718,6 +718,7 @@ bool JustWifi::setSoftAP(
     }
 
     // Copy network SSID
+    if (_softap.ssid) free(_softap.ssid);
     _softap.ssid = strdup(ssid);
     if (!_softap.ssid) {
         return false;
@@ -725,6 +726,7 @@ bool JustWifi::setSoftAP(
 
     // Copy network PASS
     if (pass && *pass != 0x00) {
+        if (_softap.pass) free(_softap.pass);
         _softap.pass = strdup(pass);
         if (!_softap.pass) {
             _softap.ssid = NULL;

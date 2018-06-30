@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.1] 2018-06-30
+### Fixed
+- Memory leak in setSoftAP
+
 ## [2.0.0] 2018-06-11
 ### Added
 - SmartConfig (a.k.a. ESP Touch) support
