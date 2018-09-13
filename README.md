@@ -2,7 +2,7 @@
 
 JustWifi is a WIFI Manager library for the [Arduino Core for ESP8266][2]. The goal of the library is to manage ONLY the WIFI connection (no webserver, no mDNS,...) from code and in a reliable and flexible way.
 
-[![version](https://img.shields.io/badge/version-2.0.1-brightgreen.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-2.0.2-brightgreen.svg)](CHANGELOG.md)
 [![travis](https://travis-ci.org/xoseperez/justwifi.svg?branch=dev)](https://travis-ci.org/xoseperez/justwifi)
 [![codacy](https://img.shields.io/codacy/grade/4ccbea0317c4415eb2d1c562feced407/dev.svg)](https://www.codacy.com/app/xoseperez/justwifi/dashboard)
 [![license](https://img.shields.io/github/license/xoseperez/justwifi.svg)](LICENSE)

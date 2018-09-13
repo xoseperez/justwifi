@@ -3,6 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.2] 2018-09-13
+### Fixed
+- Check NO_EXTRA_4K_HEAP flag for WPS support on SDK 2.4.2
+
 ## [2.0.1] 2018-06-30
 ### Fixed
 - Memory leak in setSoftAP

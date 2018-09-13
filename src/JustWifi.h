@@ -32,6 +32,12 @@ extern "C" {
   #include "user_interface.h"
 }
 
+// Check NO_EXTRA_4K_HEAP build flag in SDK 2.4.2
+#include <core_version.h>
+#if defined(JUSTWIFI_ENABLE_WPS) && defined(ARDUINO_ESP8266_RELEASE_2_4_2) && not defined(NO_EXTRA_4K_HEAP)
+    #error "SDK 2.4.2 has WPS support disabled by default, enable it by adding -DNO_EXTRA_4K_HEAP to your build flags"
+#endif
+
 #define DEFAULT_CONNECT_TIMEOUT         10000
 #define DEFAULT_RECONNECT_INTERVAL      60000
 #define JUSTWIFI_SMARTCONFIG_TIMEOUT    60000
