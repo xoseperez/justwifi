@@ -2,43 +2,43 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-network_t               KEYWORD1
-justwifi_messages_t	    KEYWORD1
-justwifi_states_t       KEYWORD1
-TMessageFunction        KEYWORD1
+network_t	KEYWORD1
+justwifi_messages_t	KEYWORD1
+justwifi_states_t	KEYWORD1
+TMessageFunction	KEYWORD1
 
 #######################################
 # Classes (KEYWORD1)
 #######################################
 
-JustWifi                KEYWORD1
+JustWifi	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-addCurrentNetwork       KEYWORD2
-addNetwork              KEYWORD2
-setSoftAP               KEYWORD2
-setHostname             KEYWORD2
-setConnectTimeout       KEYWORD2
-setReconnectTimeout     KEYWORD2
-resetReconnectTimeout   KEYWORD2
-subscribe               KEYWORD2
-getAPSSID               KEYWORD2
-connectable             KEYWORD2
-turnOff                 KEYWORD2
-turnOn                  KEYWORD2
-disconnect              KEYWORD2
-enableScan              KEYWORD2
-enableSTA               KEYWORD2
-enableAP                KEYWORD2
-enableAPFallback        KEYWORD2
-startWPS                KEYWORD2
-startSmartConfig        KEYWORD2
-init                    KEYWORD2
-loop                    KEYWORD2
-_events                 KEYWORD2
+addCurrentNetwork	KEYWORD2
+addNetwork	KEYWORD2
+setSoftAP	KEYWORD2
+setHostname	KEYWORD2
+setConnectTimeout	KEYWORD2
+setReconnectTimeout	KEYWORD2
+resetReconnectTimeout	KEYWORD2
+subscribe	KEYWORD2
+getAPSSID	KEYWORD2
+connectable	KEYWORD2
+turnOff	KEYWORD2
+turnOn	KEYWORD2
+disconnect	KEYWORD2
+enableScan	KEYWORD2
+enableSTA	KEYWORD2
+enableAP	KEYWORD2
+enableAPFallback	KEYWORD2
+startWPS	KEYWORD2
+startSmartConfig	KEYWORD2
+init	KEYWORD2
+loop	KEYWORD2
+_events	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
@@ -48,14 +48,14 @@ _events                 KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
-RESPONSE_START          LITERAL1
-RESPONSE_OK             LITERAL1
-RESPONSE_WAIT           LITERAL1
-RESPONSE_FAIL           LITERAL1
+RESPONSE_START	LITERAL1
+RESPONSE_OK	LITERAL1
+RESPONSE_WAIT	LITERAL1
+RESPONSE_FAIL	LITERAL1
 
-JUSTWIFI_ENABLE_WPS             LITERAL1
-JUSTWIFI_ENABLE_SMARTCONFIG     LITERAL1
+JUSTWIFI_ENABLE_WPS	LITERAL1
+JUSTWIFI_ENABLE_SMARTCONFIG	LITERAL1
 
-DEFAULT_CONNECT_TIMEOUT         LITERAL1
-DEFAULT_RECONNECT_INTERVAL      LITERAL1
-JUSTWIFI_SMARTCONFIG_TIMEOUT    LITERAL1
+DEFAULT_CONNECT_TIMEOUT	LITERAL1
+DEFAULT_RECONNECT_INTERVAL	LITERAL1
+JUSTWIFI_SMARTCONFIG_TIMEOUT	LITERAL1
