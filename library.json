@@ -11,8 +11,6 @@
     "exclude": "tests",
     "frameworks": "arduino",
     "platforms": "espressif8266",
-    "dependencies": [
-    ],
     "authors": {
         "name": "Xose Perez",
         "email": "xose.perez@gmail.com",
