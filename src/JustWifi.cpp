@@ -251,6 +251,21 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 		    _doCallback(MESSAGE_CONNECTING, buffer);
         }
 
+        #ifdef JUSTWIFI_ENABLE_ENTERPRISE
+        if (entry.enterprise_username && entry.enterprise_password) {
+            struct station_config wifi_config;
+            memset(&wifi_config, 0, sizeof(wifi_config));
+            strcpy((char*)wifi_config.ssid, entry.ssid);
+            wifi_station_set_config(&wifi_config);
+            wifi_station_clear_cert_key();
+            wifi_station_clear_enterprise_ca_cert();
+            wifi_station_set_wpa2_enterprise_auth(1);
+            wifi_station_set_enterprise_identity((uint8*)entry.enterprise_username, strlen(entry.enterprise_username));
+            wifi_station_set_enterprise_username((uint8*)entry.enterprise_username, strlen(entry.enterprise_username));
+            wifi_station_set_enterprise_password((uint8*)entry.enterprise_password, strlen(entry.enterprise_password));
+            wifi_station_connect();
+        } else
+        #endif
         if (entry.channel == 0) {
             WiFi.begin(entry.ssid, entry.pass);
         } else {
@@ -628,7 +643,9 @@ bool JustWifi::addNetwork(
     const char * gw,
     const char * netmask,
     const char * dns,
-    bool front
+    bool front,
+    const char * enterprise_username,
+    const char * enterprise_password
 ) {
 
     network_t new_network;
@@ -671,6 +688,10 @@ bool JustWifi::addNetwork(
     }
     if (dns && *dns != 0x00) {
         new_network.dns.fromString(dns);
+    }
+    if (enterprise_username && enterprise_password && *enterprise_username != 0x00 && *enterprise_password != 0x00) {
+        new_network.enterprise_username = strdup(enterprise_username);
+        new_network.enterprise_password = strdup(enterprise_password);
     }
 
     // Defaults

@@ -28,6 +28,10 @@ along with the JustWifi library.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <ESP8266WiFi.h>
 
+#ifdef JUSTWIFI_ENABLE_ENTERPRISE
+#include "wpa2_enterprise.h"
+#endif
+
 extern "C" {
   #include "user_interface.h"
 }
@@ -66,6 +70,8 @@ typedef struct {
     uint8_t channel;
     uint8_t bssid[6];
     uint8_t next;
+    char * enterprise_username;
+    char * enterprise_password;
 } network_t;
 
 typedef enum {
@@ -138,7 +144,9 @@ class JustWifi {
             const char * gw = NULL,
             const char * netmask = NULL,
             const char * dns = NULL,
-            bool front = false
+            bool front = false,
+            const char * enterprise_username = NULL,
+            const char * enterprise_password = NULL
         );
         bool setSoftAP(
             const char * ssid,
