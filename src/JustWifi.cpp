@@ -253,17 +253,33 @@ uint8_t JustWifi::_doSTA(uint8_t id) {
 
         #ifdef JUSTWIFI_ENABLE_ENTERPRISE
         if (entry.enterprise_username && entry.enterprise_password) {
+            // Create config
             struct station_config wifi_config;
             memset(&wifi_config, 0, sizeof(wifi_config));
             strcpy((char*)wifi_config.ssid, entry.ssid);
-            wifi_station_set_config(&wifi_config);
+            wifi_config.bssid_set = 0;
+            *wifi_config.password = 0;
+
+            // Set some defaults
+            wifi_set_opmode(STATION_MODE);
+            wifi_station_set_config_current(&wifi_config);
+            wifi_station_set_enterprise_disable_time_check(1);
             wifi_station_clear_cert_key();
             wifi_station_clear_enterprise_ca_cert();
             wifi_station_set_wpa2_enterprise_auth(1);
+
+            // Set user/pass
             wifi_station_set_enterprise_identity((uint8*)entry.enterprise_username, strlen(entry.enterprise_username));
             wifi_station_set_enterprise_username((uint8*)entry.enterprise_username, strlen(entry.enterprise_username));
             wifi_station_set_enterprise_password((uint8*)entry.enterprise_password, strlen(entry.enterprise_password));
+
+            // Connect, free resources after
             wifi_station_connect();
+            wifi_station_clear_enterprise_identity();
+            wifi_station_clear_enterprise_username();
+            wifi_station_clear_enterprise_password();
+            wifi_station_clear_cert_key();
+            wifi_station_clear_enterprise_ca_cert();
         } else
         #endif
         if (entry.channel == 0) {
