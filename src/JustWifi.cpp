@@ -519,6 +519,8 @@ void JustWifi::_machine() {
 
         case STATE_WPS_START:
 
+            _timeout = millis();
+
             _doCallback(MESSAGE_WPS_START);
 
             _disable();
@@ -558,6 +560,10 @@ void JustWifi::_machine() {
         case STATE_WPS_ONGOING:
             if (5 == _jw_wps_status) {
                 // Still ongoing
+                // Check timeout
+                if (millis() - _timeout > _connect_timeout) {
+                    _state = STATE_WPS_FAILED;
+                }
             } else if (WPS_CB_ST_SUCCESS == _jw_wps_status) {
                 _state = STATE_WPS_SUCCESS;
             } else {
