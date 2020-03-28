@@ -1,16 +1,16 @@
 {
     "name": "JustWifi",
     "keywords": "wifi,manager,scan,wps,smartconfig",
-    "description": "Wifi Manager for ESP8266, supports multiple wifi networks, scan for strongest signal, WPS and SmartConfig",
+    "description": "Wifi Manager for ESP8266 and ESP32, supports multiple wifi networks, scan for strongest signal, WPS and SmartConfig",
     "repository": {
         "type": "git",
         "url": "https://github.com/xoseperez/justwifi.git"
     },
-    "version": "2.0.2",
+    "version": "2.0.3",
     "license": "LGPL-3.0",
     "exclude": "tests",
     "frameworks": "arduino",
-    "platforms": "espressif8266",
+    "platforms": ["espressif8266", "espressif32"],
     "authors": {
         "name": "Xose Perez",
         "email": "xose.perez@gmail.com",

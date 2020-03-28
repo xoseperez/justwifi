@@ -26,15 +26,20 @@ along with the JustWifi library.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <vector>
+#if defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#elif defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
+extern "C" {
+    #include "user_interface.h"
+}
+#else
+#error "Non supported architecture!"
+#endif
 
 #ifdef JUSTWIFI_ENABLE_ENTERPRISE
 #include "wpa2_enterprise.h"
 #endif
-
-extern "C" {
-  #include "user_interface.h"
-}
 
 // Check NO_EXTRA_4K_HEAP build flag in SDK 2.4.2
 #include <core_version.h>
